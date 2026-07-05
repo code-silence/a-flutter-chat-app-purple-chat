@@ -1,0 +1,49 @@
+{
+  "project_info": {
+    "project_number": "839395739146",
+    "firebase_url": "https://pickabo-2fe7f-default-rtdb.asia-southeast1.firebasedatabase.app",
+    "project_id": "pickabo-2fe7f",
+    "storage_bucket": "pickabo-2fe7f.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:839395739146:android:a8c72cc3313f39211001f3",
+        "android_client_info": {
+          "package_name": "com.arnob.purplechat"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBlxF3Go22efQYm7LMDKJGWg-vHmWq5rQs"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:839395739146:android:f1de3eb15f5e20ba1001f3",
+        "android_client_info": {
+          "package_name": "com.example.pickabo"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBlxF3Go22efQYm7LMDKJGWg-vHmWq5rQs"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
