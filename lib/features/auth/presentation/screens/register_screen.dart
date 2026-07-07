@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../../core/widgets/app_button.dart';
 import '../../../../core/widgets/app_text_field.dart';
-
+import '../../../../routes/route_names.dart';
 import '../../providers/auth_providers.dart';
 
 class RegisterScreen extends ConsumerStatefulWidget {
@@ -55,9 +56,15 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
 
     setState(() => _loading = false);
 
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(SnackBar(content: Text(result.message)));
+    if (result.success) {
+      if (!mounted) return;
+
+      context.go(RouteNames.emailVerification);
+    } else {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(result.message)));
+    }
   }
 
   @override

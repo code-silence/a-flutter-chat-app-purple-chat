@@ -5,4 +5,9 @@ class RouteNames {
   static const login = '/login';
   static const register = '/register';
   static const home = '/home';
+  static const search = '/search';
+  static const friendRequests = '/friend-requests';
+  static const emailVerification = '/email-verification';
+  static const forgotPassword = '/forgot-password';
+  
 }

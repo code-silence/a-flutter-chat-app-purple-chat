@@ -6,6 +6,8 @@ import '../../../core/utils/firebase_error_mapper.dart';
 import '../../../core/utils/validators.dart';
 import '../models/user_model.dart';
 import 'package:flutter/foundation.dart';
+
+
 class AuthRepository {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final FirebaseDatabase _database = FirebaseDatabase.instance;
@@ -20,6 +22,63 @@ class AuthRepository {
     final snapshot = await usernamesRef.child(username).get();
 
     return !snapshot.exists;
+  }
+
+  Future<bool> isEmailVerified() async {
+    await _auth.currentUser?.reload();
+    return _auth.currentUser?.emailVerified ?? false;
+  }
+
+  Future<void> resendVerificationEmail() async {
+    await _auth.currentUser?.sendEmailVerification();
+  }
+
+  Future<bool> isAuthenticated() async {
+  return _auth.currentUser != null;
+}
+
+  Future<void> logout() async {
+    await _auth.signOut();
+  }
+
+  Future<OperationResult<void>> sendPasswordResetEmail({
+  required String email,
+}) async {
+  try {
+    await _auth.sendPasswordResetEmail(
+      email: email.trim(),
+    );
+
+    return OperationResult.success(
+      message: 'Password reset email sent.',
+    );
+  } on FirebaseAuthException catch (e) {
+    return OperationResult.failure(
+      message: FirebaseErrorMapper.auth(e),
+    );
+  } catch (e) {
+    return OperationResult.failure(
+      message: e.toString(),
+    );
+  }
+}
+
+  Future<OperationResult<void>> login({
+    required String email,
+    required String password,
+  }) async {
+    try {
+      await _auth.signInWithEmailAndPassword(
+        email: email.trim(),
+        password: password,
+      );
+
+      return OperationResult.success(message: 'Login successful.');
+    } on FirebaseAuthException catch (e) {
+      return OperationResult.failure(message: FirebaseErrorMapper.auth(e));
+    } catch (e) {
+      return OperationResult.failure(message: e.toString());
+    }
   }
 
   Future<OperationResult<UserModel>> register({
@@ -100,12 +159,10 @@ class AuthRepository {
     } on FirebaseAuthException catch (e) {
       return OperationResult.failure(message: FirebaseErrorMapper.auth(e));
     } catch (e, stackTrace) {
-  debugPrint('Register Error: $e');
-  debugPrintStack(stackTrace: stackTrace);
+      debugPrint('Register Error: $e');
+      debugPrintStack(stackTrace: stackTrace);
 
-  return OperationResult.failure(
-    message: e.toString(),
-  );
-}
+      return OperationResult.failure(message: e.toString());
+    }
   }
 }

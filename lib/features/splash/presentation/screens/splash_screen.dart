@@ -23,14 +23,25 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
   Future<void> _checkAuthentication() async {
     await Future.delayed(const Duration(seconds: 1));
 
-    final isLoggedIn = ref.read(authControllerProvider).isLoggedIn();
+    final controller = ref.read(authControllerProvider);
+
+    final loggedIn = controller.isLoggedIn();
 
     if (!mounted) return;
 
-    if (isLoggedIn) {
+    if (!loggedIn) {
+      context.go(RouteNames.login);
+      return;
+    }
+
+    final verified = await controller.shouldGoToHome();
+
+    if (!mounted) return;
+
+    if (verified) {
       context.go(RouteNames.home);
     } else {
-      context.go(RouteNames.login);
+      context.go(RouteNames.emailVerification);
     }
   }
 
