@@ -24,6 +24,8 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
 
     user = await ref.read(searchControllerProvider).findUser(controller.text);
 
+    debugPrint('Result: $user');
+
     setState(() => loading = false);
   }
 
@@ -58,22 +60,46 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
               if (loading) const CircularProgressIndicator(),
 
               if (!loading && user != null)
-                ListTile(
-                  title: Text(user!.displayName),
-                  subtitle: Text('@${user!.username}'),
-                  trailing: ElevatedButton(
-                    onPressed: () async {
-                      await ref
-                          .read(friendRepositoryProvider)
-                          .sendRequest(user!.uid);
+                Card(
+                  child: Padding(
+                    padding: const EdgeInsets.all(12),
+                    child: Row(
+                      children: [
+                        const CircleAvatar(child: Icon(Icons.person)),
 
-                      if (!mounted) return;
+                        const SizedBox(width: 12),
 
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Friend request sent.')),
-                      );
-                    },
-                    child: const Text('Add'),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(user!.displayName),
+                              Text('@${user!.username}'),
+                            ],
+                          ),
+                        ),
+
+                        SizedBox(
+                          width: 80,
+                          child: ElevatedButton(
+                            onPressed: () async {
+                              await ref
+                                  .read(friendRepositoryProvider)
+                                  .sendRequest(user!.uid);
+
+                              if (!mounted) return;
+
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text('Friend request sent.'),
+                                ),
+                              );
+                            },
+                            child: const Text('Add'),
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
             ],
