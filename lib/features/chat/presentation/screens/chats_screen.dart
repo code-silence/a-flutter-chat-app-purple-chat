@@ -1,13 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../../core/utils/time_utils.dart';
 import '../../../auth/models/user_model.dart';
 import '../../models/chat_model.dart';
 import '../../providers/chat_provider.dart';
 import 'chat_screen.dart';
-import '../../../../../core/utils/time_utils.dart';
-import '../../../../core/utils/message_status.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 
 class ChatsScreen extends ConsumerWidget {
   const ChatsScreen({super.key});

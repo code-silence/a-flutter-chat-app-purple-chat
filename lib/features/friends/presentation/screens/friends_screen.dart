@@ -2,9 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../auth/models/user_model.dart';
-import '../../providers/friend_provider.dart';
-import 'package:go_router/go_router.dart';
 import '../../../chat/presentation/screens/chat_screen.dart';
+import '../../providers/friend_provider.dart';
 
 class FriendsScreen extends ConsumerWidget {
   const FriendsScreen({super.key});
