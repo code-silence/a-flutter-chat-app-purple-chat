@@ -4,6 +4,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../auth/models/user_model.dart';
 import '../../models/message_model.dart';
 import '../../providers/chat_provider.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import '../../../../core/utils/message_status.dart';
+import '../../../../../core/utils/time_utils.dart';
 
 class ChatScreen extends ConsumerStatefulWidget {
   final UserModel friend;
@@ -16,6 +19,7 @@ class ChatScreen extends ConsumerStatefulWidget {
 
 class _ChatScreenState extends ConsumerState<ChatScreen> {
   final _controller = TextEditingController();
+  final _scrollController = ScrollController();
 
   @override
   void initState() {
@@ -29,6 +33,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
   @override
   void dispose() {
     _controller.dispose();
+    _scrollController.dispose();
     super.dispose();
   }
 
@@ -67,7 +72,18 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
 
                   final messages = snapshot.data!;
 
+                  WidgetsBinding.instance.addPostFrameCallback((_) {
+                    if (_scrollController.hasClients) {
+                      _scrollController.animateTo(
+                        _scrollController.position.maxScrollExtent,
+                        duration: const Duration(milliseconds: 250),
+                        curve: Curves.easeOut,
+                      );
+                    }
+                  });
+
                   return ListView.builder(
+                    controller: _scrollController,
                     padding: const EdgeInsets.all(12),
                     itemCount: messages.length,
                     itemBuilder: (context, index) {
@@ -86,13 +102,40 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                                 : Theme.of(context).colorScheme.primary,
                             borderRadius: BorderRadius.circular(12),
                           ),
-                          child: Text(
-                            message.text,
-                            style: TextStyle(
-                              color: message.senderUid == widget.friend.uid
-                                  ? Colors.black
-                                  : Colors.white,
-                            ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.end,
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(
+                                message.text,
+                                style: TextStyle(
+                                  color: message.senderUid == widget.friend.uid
+                                      ? Colors.black
+                                      : Colors.white,
+                                ),
+                              ),
+
+                              if (message.senderUid ==
+                                  FirebaseAuth.instance.currentUser?.uid)
+                                Padding(
+                                  padding: const EdgeInsets.only(top: 4),
+                                  child: MessageStatus.icon(message),
+                                ),
+
+                              Padding(
+                                padding: const EdgeInsets.only(top: 2),
+                                child: Text(
+                                  TimeUtils.formatMessageTime(message.sentAt),
+                                  style: TextStyle(
+                                    fontSize: 10,
+                                    color:
+                                        message.senderUid == widget.friend.uid
+                                        ? Colors.black54
+                                        : Colors.white70,
+                                  ),
+                                ),
+                              ),
+                            ],
                           ),
                         ),
                       );

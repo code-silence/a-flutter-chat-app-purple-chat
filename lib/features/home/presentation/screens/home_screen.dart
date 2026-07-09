@@ -4,7 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../routes/route_names.dart';
 import '../../../auth/providers/auth_providers.dart';
-import '../../../friends/presentation/screens/friends_screen.dart';
+import '../../../chat/presentation/screens/chats_screen.dart';
 
 class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
@@ -39,7 +39,7 @@ class HomeScreen extends ConsumerWidget {
           ),
         ],
       ),
-      body: const SafeArea(child: FriendsScreen()),
+      body: const SafeArea(child: ChatsScreen()),
       floatingActionButton: FloatingActionButton(
         onPressed: () {},
         child: const Icon(Icons.person_add),

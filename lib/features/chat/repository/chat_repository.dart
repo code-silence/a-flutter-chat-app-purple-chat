@@ -3,6 +3,8 @@ import 'package:firebase_database/firebase_database.dart';
 
 import '../../../../core/utils/chat_utils.dart';
 import '../models/message_model.dart';
+import '../models/chat_model.dart';
+import '../../auth/models/user_model.dart';
 
 class ChatRepository {
   final _auth = FirebaseAuth.instance;
@@ -55,6 +57,14 @@ class ChatRepository {
       'readAt': 0,
     });
 
+    final unreadRef = _db.child('chat_meta/$friendUid/${me.uid}/unread');
+
+    final snap = await unreadRef.get();
+
+    final current = (snap.value as int?) ?? 0;
+
+    await unreadRef.set(current + 1);
+
     await _db.child('chats/$chatId').set({
       'members': {me.uid: true, friendUid: true},
       'lastMessage': text.trim(),
@@ -92,5 +102,65 @@ class ChatRepository {
             .set(ServerValue.timestamp);
       }
     }
+
+    await _db.child('chat_meta/${me.uid}/$friendUid/unread').set(0);
+  }
+
+  Stream<List<ChatModel>> chatStream() {
+    final me = _auth.currentUser;
+    if (me == null) {
+      return const Stream.empty();
+    }
+
+    return _db.child('chats').onValue.map((event) {
+      if (event.snapshot.value == null) {
+        return <ChatModel>[];
+      }
+
+      final data = Map<dynamic, dynamic>.from(event.snapshot.value as Map);
+
+      final chats = <ChatModel>[];
+
+      for (final entry in data.entries) {
+        final chat = ChatModel.fromMap(
+          entry.key,
+          Map<dynamic, dynamic>.from(entry.value),
+        );
+
+        if (chat.members.containsKey(me.uid)) {
+          chats.add(chat);
+        }
+      }
+
+      chats.sort((a, b) => b.lastMessageTime.compareTo(a.lastMessageTime));
+
+      return chats;
+    });
+  }
+
+  Future<UserModel?> getFriend(ChatModel chat) async {
+    final me = _auth.currentUser;
+    if (me == null) return null;
+
+    final friendUid = chat.members.keys.firstWhere((uid) => uid != me.uid);
+
+    final snap = await _db.child('users/$friendUid').get();
+
+    if (!snap.exists) return null;
+
+    return UserModel.fromMap(Map<String, dynamic>.from(snap.value as Map));
+  }
+
+  Stream<int> unreadCount(String friendUid) {
+    final me = _auth.currentUser;
+    if (me == null) {
+      return const Stream.empty();
+    }
+
+    return _db.child('chat_meta/${me.uid}/$friendUid/unread').onValue.map((
+      event,
+    ) {
+      return (event.snapshot.value as int?) ?? 0;
+    });
   }
 }
