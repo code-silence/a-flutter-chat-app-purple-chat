@@ -7,7 +7,6 @@ import '../../../core/utils/validators.dart';
 import '../models/user_model.dart';
 import 'package:flutter/foundation.dart';
 
-
 class AuthRepository {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final FirebaseDatabase _database = FirebaseDatabase.instance;
@@ -34,34 +33,26 @@ class AuthRepository {
   }
 
   Future<bool> isAuthenticated() async {
-  return _auth.currentUser != null;
-}
+    return _auth.currentUser != null;
+  }
 
   Future<void> logout() async {
     await _auth.signOut();
   }
 
   Future<OperationResult<void>> sendPasswordResetEmail({
-  required String email,
-}) async {
-  try {
-    await _auth.sendPasswordResetEmail(
-      email: email.trim(),
-    );
+    required String email,
+  }) async {
+    try {
+      await _auth.sendPasswordResetEmail(email: email.trim());
 
-    return OperationResult.success(
-      message: 'Password reset email sent.',
-    );
-  } on FirebaseAuthException catch (e) {
-    return OperationResult.failure(
-      message: FirebaseErrorMapper.auth(e),
-    );
-  } catch (e) {
-    return OperationResult.failure(
-      message: e.toString(),
-    );
+      return OperationResult.success(message: 'Password reset email sent.');
+    } on FirebaseAuthException catch (e) {
+      return OperationResult.failure(message: FirebaseErrorMapper.auth(e));
+    } catch (e) {
+      return OperationResult.failure(message: e.toString());
+    }
   }
-}
 
   Future<OperationResult<void>> login({
     required String email,
@@ -79,6 +70,31 @@ class AuthRepository {
     } catch (e) {
       return OperationResult.failure(message: e.toString());
     }
+  }
+
+  Future<UserModel?> getCurrentUserModel() async {
+    final user = _auth.currentUser;
+
+    if (user == null) return null;
+
+    final snap = await usersRef.child(user.uid).get();
+
+    if (!snap.exists) return null;
+
+    return UserModel.fromMap(Map<String, dynamic>.from(snap.value as Map));
+  }
+
+  Future<void> updateProfile({
+    required String displayName,
+    required String bio,
+  }) async {
+    final user = _auth.currentUser;
+    if (user == null) return;
+
+    await usersRef.child(user.uid).update({
+      'displayName': displayName.trim(),
+      'bio': bio.trim(),
+    });
   }
 
   Future<OperationResult<UserModel>> register({

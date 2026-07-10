@@ -9,6 +9,8 @@ import '../features/splash/presentation/screens/splash_screen.dart';
 import 'route_names.dart';
 import '../features/search/presentation/screens/search_screen.dart';
 import '../features/friends/presentation/screens/friend_requests_screen.dart';
+import '../features/profile/presentation/screens/profile_screen.dart';
+import '../features/profile/presentation/screens/edit_profile_screen.dart';
 
 final GoRouter appRouter = GoRouter(
   initialLocation: RouteNames.splash,
@@ -55,9 +57,19 @@ final GoRouter appRouter = GoRouter(
     ),
 
     GoRoute(
-  path: RouteNames.friendRequests,
-  builder: (context, state) =>
-      const FriendRequestsScreen(),
-),
+      path: RouteNames.friendRequests,
+      builder: (context, state) => const FriendRequestsScreen(),
+    ),
+
+    GoRoute(
+      path: RouteNames.profile,
+      builder: (context, state) => const ProfileScreen(),
+    ),
+
+    GoRoute(
+      path: RouteNames.editProfile,
+      builder: (context, state) => const EditProfileScreen(),
+    ),
+
   ],
 );

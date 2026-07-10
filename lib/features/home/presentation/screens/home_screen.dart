@@ -37,6 +37,13 @@ class HomeScreen extends ConsumerWidget {
             },
             icon: const Icon(Icons.logout),
           ),
+
+          IconButton(
+            onPressed: () {
+              context.push(RouteNames.profile);
+            },
+            icon: const Icon(Icons.person),
+          ),
         ],
       ),
       body: const SafeArea(child: ChatsScreen()),
