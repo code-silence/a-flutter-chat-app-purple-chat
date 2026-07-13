@@ -7,6 +7,9 @@ import '../../providers/chat_provider.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../../../../core/utils/message_status.dart';
 import '../../../../../core/utils/time_utils.dart';
+import 'package:go_router/go_router.dart';
+import '../../../../routes/route_names.dart';
+
 
 class ChatScreen extends ConsumerStatefulWidget {
   final UserModel friend;
@@ -54,7 +57,14 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
     final repository = ref.read(chatRepositoryProvider);
 
     return Scaffold(
-      appBar: AppBar(title: Text(widget.friend.displayName)),
+      appBar: AppBar(
+        title: InkWell(
+          onTap: () {
+            context.push(RouteNames.friendProfile, extra: widget.friend);
+          },
+          child: Text(widget.friend.displayName),
+        ),
+      ),
       body: SafeArea(
         child: Column(
           children: [

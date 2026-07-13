@@ -45,6 +45,9 @@ class ChatRepository {
     final me = _auth.currentUser;
     if (me == null) return;
 
+    if (await isBlocked(friendUid)) {
+      return;
+    }
     final chatId = ChatUtils.getChatId(me.uid, friendUid);
 
     final messageRef = _db.child('messages/$chatId').push();
@@ -162,5 +165,16 @@ class ChatRepository {
     ) {
       return (event.snapshot.value as int?) ?? 0;
     });
+  }
+
+  Future<bool> isBlocked(String uid) async {
+    final me = _auth.currentUser;
+    if (me == null) return true;
+
+    final iBlocked = await _db.child('blocked_users/${me.uid}/$uid').get();
+
+    final blockedMe = await _db.child('blocked_users/$uid/${me.uid}').get();
+
+    return iBlocked.exists || blockedMe.exists;
   }
 }

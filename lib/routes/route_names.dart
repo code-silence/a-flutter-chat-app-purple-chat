@@ -11,4 +11,6 @@ class RouteNames {
   static const friendRequests = '/friend-requests';
   static const emailVerification = '/email-verification';
   static const forgotPassword = '/forgot-password';
+  static const settings = '/settings';
+  static const friendProfile = '/friend-profile';
 }

@@ -11,6 +11,9 @@ import '../features/search/presentation/screens/search_screen.dart';
 import '../features/friends/presentation/screens/friend_requests_screen.dart';
 import '../features/profile/presentation/screens/profile_screen.dart';
 import '../features/profile/presentation/screens/edit_profile_screen.dart';
+import '../features/settings/presentation/screens/settings_screen.dart';
+import '../features/friends/presentation/screens/friend_profile_screen.dart';
+import '../features/auth/models/user_model.dart';
 
 final GoRouter appRouter = GoRouter(
   initialLocation: RouteNames.splash,
@@ -71,5 +74,18 @@ final GoRouter appRouter = GoRouter(
       builder: (context, state) => const EditProfileScreen(),
     ),
 
+    GoRoute(
+      path: RouteNames.settings,
+      builder: (context, state) => const SettingsScreen(),
+    ),
+
+    GoRoute(
+      path: RouteNames.friendProfile,
+      builder: (context, state) {
+        final friend = state.extra as UserModel;
+
+        return FriendProfileScreen(friend: friend);
+      },
+    ),
   ],
 );

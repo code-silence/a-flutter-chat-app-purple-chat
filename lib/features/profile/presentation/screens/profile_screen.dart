@@ -33,9 +33,14 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const CircleAvatar(
+                  CircleAvatar(
                     radius: 50,
-                    child: Icon(Icons.person, size: 50),
+                    backgroundImage: user.photoUrl.isNotEmpty
+                        ? NetworkImage(user.photoUrl)
+                        : null,
+                    child: user.photoUrl.isEmpty
+                        ? const Icon(Icons.person, size: 50)
+                        : null,
                   ),
 
                   const SizedBox(height: 20),
@@ -64,6 +69,14 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                       }
                     },
                     child: const Text('Edit Profile'),
+                  ),
+                  const SizedBox(height: 12),
+
+                  OutlinedButton(
+                    onPressed: () {
+                      context.push(RouteNames.settings);
+                    },
+                    child: const Text('Settings'),
                   ),
                 ],
               ),

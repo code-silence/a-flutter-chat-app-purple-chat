@@ -12,6 +12,9 @@ class FriendRepository {
   Future<void> sendRequest(String receiverUid) async {
     final sender = _auth.currentUser;
     if (sender == null) return;
+    if (await isBlocked(receiverUid)) {
+      return;
+    }
     if (sender.uid == receiverUid) {
       return;
     }
@@ -64,6 +67,34 @@ class FriendRepository {
 
   Future<UserModel?> getUser(String uid) {
     return _searchRepository.getUserByUid(uid);
+  }
+
+  Future<void> removeFriend(String friendUid) async {
+    final me = _auth.currentUser;
+    if (me == null) return;
+
+    await _db.child('friends/${me.uid}/$friendUid').remove();
+    await _db.child('friends/$friendUid/${me.uid}').remove();
+  }
+
+  Future<void> blockUser(String uid) async {
+    final me = _auth.currentUser;
+    if (me == null) return;
+
+    await removeFriend(uid);
+
+    await _db.child('blocked_users/${me.uid}/$uid').set(true);
+  }
+
+  Future<bool> isBlocked(String uid) async {
+    final me = _auth.currentUser;
+    if (me == null) return true;
+
+    final iBlocked = await _db.child('blocked_users/${me.uid}/$uid').get();
+
+    final blockedMe = await _db.child('blocked_users/$uid/${me.uid}').get();
+
+    return iBlocked.exists || blockedMe.exists;
   }
 
   Stream<List<String>> getFriends() {
