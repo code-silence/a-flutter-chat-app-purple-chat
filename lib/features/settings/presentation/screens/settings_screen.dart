@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../auth/providers/auth_providers.dart';
+import '../../../../routes/route_names.dart';
+import 'package:go_router/go_router.dart';
+
 
 class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({super.key});
@@ -41,6 +44,13 @@ class SettingsScreen extends ConsumerWidget {
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(content: Text('Verification email sent.')),
               );
+            },
+          ),
+          ListTile(
+            leading: const Icon(Icons.block),
+            title: const Text('Blocked Users'),
+            onTap: () {
+              context.push(RouteNames.blockedUsers);
             },
           ),
           ListTile(

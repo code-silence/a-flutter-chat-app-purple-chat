@@ -14,6 +14,7 @@ import '../features/profile/presentation/screens/edit_profile_screen.dart';
 import '../features/settings/presentation/screens/settings_screen.dart';
 import '../features/friends/presentation/screens/friend_profile_screen.dart';
 import '../features/auth/models/user_model.dart';
+import '../features/friends/presentation/screens/blocked_users_screen.dart';
 
 final GoRouter appRouter = GoRouter(
   initialLocation: RouteNames.splash,
@@ -87,5 +88,12 @@ final GoRouter appRouter = GoRouter(
         return FriendProfileScreen(friend: friend);
       },
     ),
+
+    GoRoute(
+  path: RouteNames.blockedUsers,
+  builder: (context, state) =>
+      const BlockedUsersScreen(),
+),
+
   ],
 );

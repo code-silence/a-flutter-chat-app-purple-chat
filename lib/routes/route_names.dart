@@ -13,4 +13,5 @@ class RouteNames {
   static const forgotPassword = '/forgot-password';
   static const settings = '/settings';
   static const friendProfile = '/friend-profile';
+  static const blockedUsers = '/blocked-users';
 }

@@ -97,6 +97,31 @@ class FriendRepository {
     return iBlocked.exists || blockedMe.exists;
   }
 
+  Stream<List<String>> blockedUsersStream() {
+    final me = _auth.currentUser;
+    if (me == null) {
+      return const Stream.empty();
+    }
+
+    return _db.child('blocked_users/${me.uid}').onValue.map((event) {
+      if (event.snapshot.value == null) {
+        return <String>[];
+      }
+
+      final data = Map<dynamic, dynamic>.from(event.snapshot.value as Map);
+
+      return data.keys.map((e) => e.toString()).toList();
+    });
+  }
+
+
+  Future<void> unblockUser(String uid) async {
+    final me = _auth.currentUser;
+    if (me == null) return;
+
+    await _db.child('blocked_users/${me.uid}/$uid').remove();
+  }
+
   Stream<List<String>> getFriends() {
     final me = _auth.currentUser;
     if (me == null) {
