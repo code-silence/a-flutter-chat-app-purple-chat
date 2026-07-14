@@ -40,7 +40,12 @@ class BlockedUsersScreen extends ConsumerWidget {
 
                   return ListTile(
                     leading: CircleAvatar(
-                      child: Text(user.displayName[0].toUpperCase()),
+                      backgroundImage: user.photoUrl.isNotEmpty
+                          ? NetworkImage(user.photoUrl)
+                          : null,
+                      child: user.photoUrl.isEmpty
+                          ? Text(user.displayName[0].toUpperCase())
+                          : null,
                     ),
                     title: Text(user.displayName),
                     subtitle: Text('@${user.username}'),

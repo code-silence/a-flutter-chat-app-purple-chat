@@ -43,7 +43,12 @@ class ChatsScreen extends ConsumerWidget {
 
                 return ListTile(
                   leading: CircleAvatar(
-                    child: Text(friend.displayName[0].toUpperCase()),
+                    backgroundImage: friend.photoUrl.isNotEmpty
+                        ? NetworkImage(friend.photoUrl)
+                        : null,
+                    child: friend.photoUrl.isEmpty
+                        ? Text(friend.displayName[0].toUpperCase())
+                        : null,
                   ),
                   trailing: StreamBuilder<int>(
                     stream: repo.unreadCount(friend.uid),

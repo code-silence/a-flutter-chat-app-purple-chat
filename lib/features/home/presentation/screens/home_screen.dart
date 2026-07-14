@@ -14,6 +14,7 @@ class HomeScreen extends ConsumerWidget {
     return Scaffold(
       appBar: AppBar(
         title: const Text('PurpleChat'),
+        centerTitle: false,
         actions: [
           IconButton(
             onPressed: () {

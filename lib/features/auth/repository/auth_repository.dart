@@ -40,6 +40,19 @@ class AuthRepository {
     await _auth.signOut();
   }
 
+  Future<void> updatePhoto({
+    required String photoUrl,
+    required String photoDeleteUrl,
+  }) async {
+    final user = _auth.currentUser;
+    if (user == null) return;
+
+    await usersRef.child(user.uid).update({
+      'photoUrl': photoUrl,
+      'photoDeleteUrl': photoDeleteUrl,
+    });
+  }
+
   Future<OperationResult<void>> sendPasswordResetEmail({
     required String email,
   }) async {
@@ -150,6 +163,7 @@ class AuthRepository {
         displayName: displayName,
         email: email,
         photoUrl: '',
+        photoDeleteUrl: '',
         bio: '',
         isOnline: false,
         lastSeen: now,

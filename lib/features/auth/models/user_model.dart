@@ -4,6 +4,7 @@ class UserModel {
   final String displayName;
   final String email;
   final String photoUrl;
+  final String photoDeleteUrl;
   final String bio;
   final bool isOnline;
   final int lastSeen;
@@ -15,6 +16,7 @@ class UserModel {
     required this.displayName,
     required this.email,
     required this.photoUrl,
+    required this.photoDeleteUrl,
     required this.bio,
     required this.isOnline,
     required this.lastSeen,
@@ -22,30 +24,30 @@ class UserModel {
   });
 
   UserModel copyWith({
-  String? uid,
-  String? username,
-  String? displayName,
-  String? email,
-  String? photoUrl,
-  String? bio,
-  bool? isOnline,
-  int? lastSeen,
-  int? createdAt,
-}) {
-  return UserModel(
-    uid: uid ?? this.uid,
-    username: username ?? this.username,
-    displayName: displayName ?? this.displayName,
-    email: email ?? this.email,
-    photoUrl: photoUrl ?? this.photoUrl,
-    bio: bio ?? this.bio,
-    isOnline: isOnline ?? this.isOnline,
-    lastSeen: lastSeen ?? this.lastSeen,
-    createdAt: createdAt ?? this.createdAt,
-  );
-}
-  
-
+    String? uid,
+    String? username,
+    String? displayName,
+    String? email,
+    String? photoUrl,
+    String? photoDeleteUrl,
+    String? bio,
+    bool? isOnline,
+    int? lastSeen,
+    int? createdAt,
+  }) {
+    return UserModel(
+      uid: uid ?? this.uid,
+      username: username ?? this.username,
+      displayName: displayName ?? this.displayName,
+      email: email ?? this.email,
+      photoUrl: photoUrl ?? this.photoUrl,
+      photoDeleteUrl: photoDeleteUrl ?? this.photoDeleteUrl,
+      bio: bio ?? this.bio,
+      isOnline: isOnline ?? this.isOnline,
+      lastSeen: lastSeen ?? this.lastSeen,
+      createdAt: createdAt ?? this.createdAt,
+    );
+  }
 
   Map<String, dynamic> toMap() {
     return {
@@ -54,6 +56,7 @@ class UserModel {
       'displayName': displayName,
       'email': email,
       'photoUrl': photoUrl,
+      'photoDeleteUrl': photoDeleteUrl,
       'bio': bio,
       'isOnline': isOnline,
       'lastSeen': lastSeen,
@@ -68,6 +71,7 @@ class UserModel {
       displayName: map['displayName'] ?? '',
       email: map['email'] ?? '',
       photoUrl: map['photoUrl'] ?? '',
+      photoDeleteUrl: map['photoDeleteUrl'] ?? '',
       bio: map['bio'] ?? '',
       isOnline: map['isOnline'] ?? false,
       lastSeen: map['lastSeen'] ?? 0,

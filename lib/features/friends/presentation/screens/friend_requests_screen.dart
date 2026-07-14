@@ -31,49 +31,48 @@ class FriendRequestsScreen extends ConsumerWidget {
             itemBuilder: (context, index) {
               final request = requests[index];
 
-              return ListTile(
-                title: FutureBuilder(
-                  future: repository.getUser(request.uid),
-                  builder: (context, snapshot) {
-                    if (!snapshot.hasData) {
-                      return const Text('Loading...');
-                    }
+              return FutureBuilder(
+                future: repository.getUser(request.uid),
+                builder: (context, snapshot) {
+                  if (!snapshot.hasData) {
+                    return const ListTile(title: Text('Loading...'));
+                  }
 
-                    final user = snapshot.data!;
+                  final user = snapshot.data!;
 
-                    return Text(user.displayName);
-                  },
-                ),
-                subtitle: FutureBuilder(
-                  future: repository.getUser(request.uid),
-                  builder: (context, snapshot) {
-                    if (!snapshot.hasData) {
-                      return const SizedBox();
-                    }
-
-                    final user = snapshot.data!;
-
-                    return Text('@${user.username}');
-                  },
-                ),
-
-                trailing: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    IconButton(
-                      icon: const Icon(Icons.close),
-                      onPressed: () {
-                        repository.rejectRequest(request.uid);
-                      },
+                  return ListTile(
+                    leading: CircleAvatar(
+                      backgroundImage: user.photoUrl.isNotEmpty
+                          ? NetworkImage(user.photoUrl)
+                          : null,
+                      child: user.photoUrl.isEmpty
+                          ? Text(user.displayName[0].toUpperCase())
+                          : null,
                     ),
-                    IconButton(
-                      icon: const Icon(Icons.check),
-                      onPressed: () {
-                        repository.acceptRequest(request.uid);
-                      },
+
+                    title: Text(user.displayName),
+
+                    subtitle: Text('@${user.username}'),
+
+                    trailing: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        IconButton(
+                          icon: const Icon(Icons.close),
+                          onPressed: () {
+                            repository.rejectRequest(request.uid);
+                          },
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.check),
+                          onPressed: () {
+                            repository.acceptRequest(request.uid);
+                          },
+                        ),
+                      ],
                     ),
-                  ],
-                ),
+                  );
+                },
               );
             },
           );

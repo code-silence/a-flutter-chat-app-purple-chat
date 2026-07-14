@@ -18,9 +18,14 @@ class FriendProfileScreen extends ConsumerWidget {
             children: [
               const SizedBox(height: 24),
 
-              const CircleAvatar(
+              CircleAvatar(
                 radius: 50,
-                child: Icon(Icons.person, size: 50),
+                backgroundImage: friend.photoUrl.isNotEmpty
+                    ? NetworkImage(friend.photoUrl)
+                    : null,
+                child: friend.photoUrl.isEmpty
+                    ? const Icon(Icons.person, size: 50)
+                    : null,
               ),
 
               const SizedBox(height: 16),

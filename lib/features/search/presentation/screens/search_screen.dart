@@ -65,7 +65,14 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                     padding: const EdgeInsets.all(12),
                     child: Row(
                       children: [
-                        const CircleAvatar(child: Icon(Icons.person)),
+                        CircleAvatar(
+                          backgroundImage: user!.photoUrl.isNotEmpty
+                              ? NetworkImage(user!.photoUrl)
+                              : null,
+                          child: user!.photoUrl.isEmpty
+                              ? Text(user!.displayName[0].toUpperCase())
+                              : null,
+                        ),
 
                         const SizedBox(width: 12),
 
