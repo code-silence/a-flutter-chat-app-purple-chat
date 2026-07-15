@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../auth/models/user_model.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../providers/friend_provider.dart';
+import '../../../chat/presentation/screens/chat_screen.dart';
 
 class FriendProfileScreen extends ConsumerWidget {
   final UserModel friend;
@@ -46,7 +47,17 @@ class FriendProfileScreen extends ConsumerWidget {
 
               const SizedBox(height: 30),
 
-              FilledButton(onPressed: () {}, child: const Text('Message')),
+              FilledButton(
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => ChatScreen(friend: friend),
+                    ),
+                  );
+                },
+                child: const Text('Message'),
+              ),
 
               const SizedBox(height: 12),
 

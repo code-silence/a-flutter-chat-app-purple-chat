@@ -15,7 +15,7 @@ class ProfileScreen extends ConsumerStatefulWidget {
 class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   @override
   Widget build(BuildContext context) {
-    final repository = ref.read(authRepositoryProvider);
+   // final repository = ref.read(authRepositoryProvider);
 
     return Scaffold(
       appBar: AppBar(title: const Text('Profile')),

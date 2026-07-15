@@ -70,12 +70,17 @@ class FriendRepository {
   }
 
   Future<void> removeFriend(String friendUid) async {
-    final me = _auth.currentUser;
-    if (me == null) return;
+  final me = _auth.currentUser;
+  if (me == null) return;
 
-    await _db.child('friends/${me.uid}/$friendUid').remove();
-    await _db.child('friends/$friendUid/${me.uid}').remove();
-  }
+  // Remove friendship
+  await _db.child('friends/${me.uid}/$friendUid').remove();
+  await _db.child('friends/$friendUid/${me.uid}').remove();
+
+  // Clean up any old friend requests
+  await _db.child('friend_requests/${me.uid}/$friendUid').remove();
+  await _db.child('friend_requests/$friendUid/${me.uid}').remove();
+}
 
   Future<void> blockUser(String uid) async {
     final me = _auth.currentUser;
@@ -114,7 +119,6 @@ class FriendRepository {
     });
   }
 
-
   Future<void> unblockUser(String uid) async {
     final me = _auth.currentUser;
     if (me == null) return;
@@ -137,5 +141,34 @@ class FriendRepository {
 
       return data.keys.map((e) => e.toString()).toList();
     });
+  }
+
+  Future<String> relationshipStatus(String uid) async {
+    final me = _auth.currentUser;
+    if (me == null) return 'unknown';
+
+    if (await isBlocked(uid)) {
+      return 'blocked';
+    }
+
+    final friend = await _db.child('friends/${me.uid}/$uid').get();
+
+    if (friend.exists) {
+      return 'friends';
+    }
+
+    final sent = await _db.child('friend_requests/$uid/${me.uid}').get();
+
+    if (sent.exists) {
+      return 'request_sent';
+    }
+
+    final received = await _db.child('friend_requests/${me.uid}/$uid').get();
+
+    if (received.exists) {
+      return 'request_received';
+    }
+
+    return 'none';
   }
 }

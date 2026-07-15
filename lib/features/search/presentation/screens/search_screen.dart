@@ -86,24 +86,92 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                           ),
                         ),
 
-                        SizedBox(
-                          width: 80,
-                          child: ElevatedButton(
-                            onPressed: () async {
-                              await ref
-                                  .read(friendRepositoryProvider)
-                                  .sendRequest(user!.uid);
-
-                              if (!mounted) return;
-
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                  content: Text('Friend request sent.'),
+                        FutureBuilder<String>(
+                          future: ref
+                              .read(friendRepositoryProvider)
+                              .relationshipStatus(user!.uid),
+                          builder: (context, statusSnap) {
+                            if (!statusSnap.hasData) {
+                              return const SizedBox(
+                                width: 80,
+                                child: Center(
+                                  child: CircularProgressIndicator(),
                                 ),
                               );
-                            },
-                            child: const Text('Add'),
-                          ),
+                            }
+
+                            final status = statusSnap.data!;
+
+                            if (status == 'friends') {
+                              return const SizedBox(
+                                width: 110,
+                                child: ElevatedButton(
+                                  onPressed: null,
+                                  child: Text('Friends'),
+                                ),
+                              );
+                            }
+
+                            if (status == 'request_sent') {
+                              return const SizedBox(
+                                width: 120,
+                                child: ElevatedButton(
+                                  onPressed: null,
+                                  child: Text('Sent'),
+                                ),
+                              );
+                            }
+
+                            if (status == 'request_received') {
+                              return SizedBox(
+                                width: 120,
+                                child: ElevatedButton(
+                                  onPressed: () async {
+                                    await ref
+                                        .read(friendRepositoryProvider)
+                                        .acceptRequest(user!.uid);
+
+                                    if (!mounted) return;
+
+                                    setState(() {});
+                                  },
+                                  child: const Text('Accept'),
+                                ),
+                              );
+                            }
+
+                            if (status == 'blocked') {
+                              return const SizedBox(
+                                width: 100,
+                                child: ElevatedButton(
+                                  onPressed: null,
+                                  child: Text('Blocked'),
+                                ),
+                              );
+                            }
+
+                            return SizedBox(
+                              width: 80,
+                              child: ElevatedButton(
+                                onPressed: () async {
+                                  await ref
+                                      .read(friendRepositoryProvider)
+                                      .sendRequest(user!.uid);
+
+                                  if (!mounted) return;
+
+                                  setState(() {});
+
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                      content: Text('Friend request sent.'),
+                                    ),
+                                  );
+                                },
+                                child: const Text('Add'),
+                              ),
+                            );
+                          },
                         ),
                       ],
                     ),
