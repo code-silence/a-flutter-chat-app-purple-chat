@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../../../routes/route_names.dart';
 import '../../../auth/providers/auth_providers.dart';
 import '../../../chat/presentation/screens/chats_screen.dart';
+import '../../../friends/presentation/screens/friends_screen.dart';
 
 class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
@@ -27,6 +28,16 @@ class HomeScreen extends ConsumerWidget {
               context.push(RouteNames.friendRequests);
             },
             icon: const Icon(Icons.group_add),
+          ),
+
+          IconButton(
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const FriendsScreen()),
+              );
+            },
+            icon: const Icon(Icons.people),
           ),
           IconButton(
             onPressed: () async {

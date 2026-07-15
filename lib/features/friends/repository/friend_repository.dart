@@ -70,17 +70,17 @@ class FriendRepository {
   }
 
   Future<void> removeFriend(String friendUid) async {
-  final me = _auth.currentUser;
-  if (me == null) return;
+    final me = _auth.currentUser;
+    if (me == null) return;
 
-  // Remove friendship
-  await _db.child('friends/${me.uid}/$friendUid').remove();
-  await _db.child('friends/$friendUid/${me.uid}').remove();
+    // Remove friendship
+    await _db.child('friends/${me.uid}/$friendUid').remove();
+    await _db.child('friends/$friendUid/${me.uid}').remove();
 
-  // Clean up any old friend requests
-  await _db.child('friend_requests/${me.uid}/$friendUid').remove();
-  await _db.child('friend_requests/$friendUid/${me.uid}').remove();
-}
+    // Clean up any old friend requests
+    await _db.child('friend_requests/${me.uid}/$friendUid').remove();
+    await _db.child('friend_requests/$friendUid/${me.uid}').remove();
+  }
 
   Future<void> blockUser(String uid) async {
     final me = _auth.currentUser;
@@ -140,6 +140,26 @@ class FriendRepository {
       final data = Map<dynamic, dynamic>.from(event.snapshot.value as Map);
 
       return data.keys.map((e) => e.toString()).toList();
+    });
+  }
+
+  Stream<List<UserModel>> getFriendsList() {
+    return getFriends().asyncMap((uids) async {
+      final users = <UserModel>[];
+
+      for (final uid in uids) {
+        final user = await getUser(uid);
+        if (user != null) {
+          users.add(user);
+        }
+      }
+
+      users.sort(
+        (a, b) =>
+            a.displayName.toLowerCase().compareTo(b.displayName.toLowerCase()),
+      );
+
+      return users;
     });
   }
 
