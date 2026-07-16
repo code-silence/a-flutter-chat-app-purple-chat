@@ -6,6 +6,8 @@ import '../../../../core/widgets/app_button.dart';
 import '../../../../core/widgets/app_text_field.dart';
 import '../../../../routes/route_names.dart';
 import '../../providers/auth_providers.dart';
+import '../../../../core/theme/app_colors.dart';
+import '../../../../core/widgets/app_snackbar.dart';
 
 class RegisterScreen extends ConsumerStatefulWidget {
   const RegisterScreen({super.key});
@@ -35,9 +37,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
 
   Future<void> _register() async {
     if (_passwordController.text != _confirmPasswordController.text) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('Passwords do not match.')));
+      AppSnackbar.error(context, 'Passwords do not match.');
       return;
     }
 
@@ -61,9 +61,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
 
       context.go(RouteNames.emailVerification);
     } else {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(result.message)));
+      AppSnackbar.error(context, result.message);
     }
   }
 
@@ -76,6 +74,34 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
           padding: const EdgeInsets.all(20),
           child: Column(
             children: [
+              const SizedBox(height: 20),
+
+              const Icon(
+                Icons.person_add_alt_1_rounded,
+                size: 72,
+                color: AppColors.primary,
+              ),
+
+              const SizedBox(height: 20),
+
+              Text(
+                "Create Account",
+                style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+
+              const SizedBox(height: 8),
+
+              Text(
+                "Create your PurpleChat account to start chatting.",
+                textAlign: TextAlign.center,
+                style: Theme.of(
+                  context,
+                ).textTheme.bodyMedium?.copyWith(color: Colors.grey),
+              ),
+
+              const SizedBox(height: 36),
               AppTextField(controller: _usernameController, label: 'Username'),
               const SizedBox(height: 16),
 
@@ -103,8 +129,22 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
               const SizedBox(height: 24),
 
               AppButton(
-                text: _loading ? 'Creating...' : 'Create Account',
+                text: _loading ? 'Creating Account...' : 'Create Account',
                 onPressed: _loading ? null : _register,
+              ),
+              const SizedBox(height: 16),
+
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Text("Already have an account?"),
+                  TextButton(
+                    onPressed: () {
+                      context.pop();
+                    },
+                    child: const Text("Login"),
+                  ),
+                ],
               ),
             ],
           ),

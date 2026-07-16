@@ -4,6 +4,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../auth/models/user_model.dart';
 import '../../providers/search_provider.dart';
 import '../../../../../features/friends/providers/friend_provider.dart';
+import '../../../../core/widgets/app_snackbar.dart';
+import '../../../../core/widgets/app_text_field.dart';
+
 
 class SearchScreen extends ConsumerStatefulWidget {
   const SearchScreen({super.key});
@@ -38,21 +41,36 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Search User')),
+      appBar: AppBar(title: const Text("Find Friends")),
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.all(20),
           child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              TextField(
-                controller: controller,
-                decoration: InputDecoration(
-                  hintText: 'Username',
-                  suffixIcon: IconButton(
-                    icon: const Icon(Icons.search),
-                    onPressed: search,
-                  ),
+              Text(
+                "Search by Username",
+                style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                  fontWeight: FontWeight.bold,
                 ),
+              ),
+
+              const SizedBox(height: 8),
+
+              Text(
+                "Find friends and send them a friend request.",
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                ),
+              ),
+
+              const SizedBox(height: 24),
+
+              AppTextField(
+                onSubmitted: (_) => search(),
+                textInputAction: TextInputAction.search,
+                controller: controller,
+                label: 'Username',
               ),
 
               const SizedBox(height: 24),
@@ -61,11 +79,20 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
 
               if (!loading && user != null)
                 Card(
+                  elevation: 0,
+                  margin: EdgeInsets.zero,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(18),
+                  ),
                   child: Padding(
                     padding: const EdgeInsets.all(12),
                     child: Row(
                       children: [
                         CircleAvatar(
+                          radius: 28,
+                          backgroundColor: Theme.of(
+                            context,
+                          ).colorScheme.primary,
                           backgroundImage: user!.photoUrl.isNotEmpty
                               ? NetworkImage(user!.photoUrl)
                               : null,
@@ -80,8 +107,21 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text(user!.displayName),
-                              Text('@${user!.username}'),
+                              Text(
+                                user!.displayName,
+                                style: const TextStyle(
+                                  fontSize: 17,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                              Text(
+                                '@${user!.username}',
+                                style: TextStyle(
+                                  color: Theme.of(
+                                    context,
+                                  ).colorScheme.onSurfaceVariant,
+                                ),
+                              ),
                             ],
                           ),
                         ),
@@ -162,10 +202,9 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
 
                                   setState(() {});
 
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(
-                                      content: Text('Friend request sent.'),
-                                    ),
+                                  AppSnackbar.success(
+                                    context,
+                                    'Friend request sent.',
                                   );
                                 },
                                 child: const Text('Add'),

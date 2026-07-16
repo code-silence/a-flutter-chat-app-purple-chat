@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/widgets/app_button.dart';
 import '../../../../core/widgets/app_text_field.dart';
 import '../../providers/auth_providers.dart';
+import '../../../../core/widgets/app_snackbar.dart';
 
 class ForgotPasswordScreen extends ConsumerStatefulWidget {
   const ForgotPasswordScreen({super.key});
@@ -13,8 +14,7 @@ class ForgotPasswordScreen extends ConsumerStatefulWidget {
       _ForgotPasswordScreenState();
 }
 
-class _ForgotPasswordScreenState
-    extends ConsumerState<ForgotPasswordScreen> {
+class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
   final _emailController = TextEditingController();
 
   bool _loading = false;
@@ -30,17 +30,17 @@ class _ForgotPasswordScreenState
 
     final result = await ref
         .read(authControllerProvider)
-        .sendPasswordResetEmail(
-          email: _emailController.text.trim(),
-        );
+        .sendPasswordResetEmail(email: _emailController.text.trim());
 
     if (!mounted) return;
 
     setState(() => _loading = false);
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(result.message)),
-    );
+    if (result.success) {
+      AppSnackbar.success(context, result.message);
+    } else {
+      AppSnackbar.error(context, result.message);
+    }
 
     if (result.success) {
       Navigator.pop(context);
@@ -50,25 +50,53 @@ class _ForgotPasswordScreenState
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Forgot Password'),
-      ),
+      appBar: AppBar(title: const Text('Forgot Password')),
       body: SafeArea(
-        child: Padding(
+        child: SingleChildScrollView(
           padding: const EdgeInsets.all(20),
           child: Column(
             children: [
-              AppTextField(
-                controller: _emailController,
-                label: 'Email',
+              const SizedBox(height: 30),
+
+              Icon(
+                Icons.lock_reset_rounded,
+                size: 72,
+                color: Theme.of(context).colorScheme.primary,
               ),
+
+              const SizedBox(height: 20),
+
+              Text(
+                "Forgot Password?",
+                style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+
+              const SizedBox(height: 8),
+
+              Text(
+                "Enter your email address and we'll send you a password reset link.",
+                textAlign: TextAlign.center,
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                ),
+              ),
+
+              const SizedBox(height: 36),
+              AppTextField(controller: _emailController, label: 'Email'),
               const SizedBox(height: 24),
               AppButton(
-                text: _loading
-                    ? 'Sending...'
-                    : 'Send Reset Email',
-                onPressed:
-                    _loading ? null : _sendResetEmail,
+                text: _loading ? 'Sending Email...' : 'Send Reset Email',
+                onPressed: _loading ? null : _sendResetEmail,
+              ),
+              const SizedBox(height: 16),
+
+              TextButton(
+                onPressed: () {
+                  Navigator.pop(context);
+                },
+                child: const Text("Back to Login"),
               ),
             ],
           ),

@@ -1,5 +1,5 @@
 import 'package:firebase_database/firebase_database.dart';
-
+import 'package:firebase_auth/firebase_auth.dart';
 import '../../auth/models/user_model.dart';
 import 'package:flutter/foundation.dart';
 
@@ -20,13 +20,23 @@ class SearchRepository {
 
     final userSnap = await _db.child('users/$uid').get();
     debugPrint('User exists: ${userSnap.exists}');
-debugPrint(userSnap.value.toString());
+    debugPrint(userSnap.value.toString());
 
     if (!userSnap.exists) {
       return null;
     }
 
-    return UserModel.fromMap(Map<String, dynamic>.from(userSnap.value as Map));
+    final user = UserModel.fromMap(
+      Map<String, dynamic>.from(userSnap.value as Map),
+    );
+
+    final currentUid = FirebaseAuth.instance.currentUser?.uid;
+
+    if (user.uid == currentUid) {
+      return null;
+    }
+
+    return user;
   }
 
   Future<UserModel?> getUserByUid(String uid) async {

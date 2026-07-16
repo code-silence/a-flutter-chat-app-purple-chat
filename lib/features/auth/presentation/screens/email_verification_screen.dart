@@ -2,10 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:go_router/go_router.dart';
+import '../../../../core/theme/app_colors.dart';
 
 import '../../../../core/widgets/app_button.dart';
 import '../../../../routes/route_names.dart';
 import '../../providers/auth_providers.dart';
+import '../../../../core/widgets/app_snackbar.dart';
 
 class EmailVerificationScreen extends ConsumerStatefulWidget {
   const EmailVerificationScreen({super.key});
@@ -30,18 +32,36 @@ class _EmailVerificationScreenState
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Icon(Icons.mark_email_read_outlined, size: 90),
-              const SizedBox(height: 24),
-
-              const Text(
-                'Please verify your email before continuing.',
-                textAlign: TextAlign.center,
+              Icon(
+                Icons.mark_email_read_rounded,
+                size: 80,
+                color: Theme.of(context).colorScheme.primary,
               ),
 
-              const SizedBox(height: 32),
+              const SizedBox(height: 20),
+
+              Text(
+                "Verify Your Email",
+                style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+
+              const SizedBox(height: 10),
+
+              Text(
+                "We've sent a verification link to your email address.\n"
+                "Click the link, then return here and tap the button below.",
+                textAlign: TextAlign.center,
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  color: AppColors.textSecondary,
+                ),
+              ),
+
+              const SizedBox(height: 36),
 
               AppButton(
-                text: 'I Have Verified',
+                text: 'Continue',
                 onPressed: () async {
                   final verified = await ref
                       .read(authControllerProvider)
@@ -52,9 +72,7 @@ class _EmailVerificationScreenState
                   if (verified) {
                     context.go(RouteNames.home);
                   } else {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Email not verified yet.')),
-                    );
+                    AppSnackbar.error(context, 'Email not verified yet.');
                   }
                 },
               ),
@@ -62,7 +80,7 @@ class _EmailVerificationScreenState
               const SizedBox(height: 16),
 
               AppButton(
-                text: 'Resend Email',
+                text: 'Resend Verification Email',
                 onPressed: () async {
                   await ref
                       .read(authControllerProvider)
@@ -70,16 +88,14 @@ class _EmailVerificationScreenState
 
                   if (!mounted) return;
 
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Verification email sent.')),
-                  );
+                  AppSnackbar.success(context, 'Verification email sent.');
                 },
               ),
 
-              const SizedBox(height: 16),
 
-              AppButton(
-                text: 'Logout',
+              const SizedBox(height: 20),
+
+              TextButton(
                 onPressed: () async {
                   await ref.read(authControllerProvider).logout();
 
@@ -87,6 +103,7 @@ class _EmailVerificationScreenState
 
                   context.go(RouteNames.login);
                 },
+                child: const Text("Back to Login"),
               ),
             ],
           ),
