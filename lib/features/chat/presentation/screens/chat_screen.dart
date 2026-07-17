@@ -10,7 +10,6 @@ import '../../../../../core/utils/time_utils.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../routes/route_names.dart';
 
-
 class ChatScreen extends ConsumerStatefulWidget {
   final UserModel friend;
 
@@ -58,11 +57,72 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: InkWell(
-          onTap: () {
-            context.push(RouteNames.friendProfile, extra: widget.friend);
+        titleSpacing: 8,
+        title: StreamBuilder<UserModel>(
+          stream: repository.userStream(widget.friend.uid),
+          builder: (context, snapshot) {
+            final user = snapshot.data ?? widget.friend;
+
+            return InkWell(
+              onTap: () {
+                context.push(RouteNames.friendProfile, extra: user);
+              },
+              child: Row(
+                children: [
+                  CircleAvatar(
+                    radius: 22,
+                    backgroundColor: Theme.of(
+                      context,
+                    ).colorScheme.primaryContainer,
+                    backgroundImage: user.photoUrl.isNotEmpty
+                        ? NetworkImage(user.photoUrl)
+                        : null,
+                    child: user.photoUrl.isEmpty
+                        ? Text(user.displayName[0].toUpperCase())
+                        : null,
+                  ),
+
+                  const SizedBox(width: 12),
+
+                  Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        user.displayName,
+                        style: const TextStyle(
+                          fontSize: 17,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+
+                      Row(
+                        children: [
+                          Icon(
+                            Icons.circle,
+                            size: 9,
+                            color: user.isOnline ? Colors.green : Colors.grey,
+                          ),
+
+                          const SizedBox(width: 5),
+
+                          Text(
+                            user.isOnline ? "Online" : "Offline",
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: Theme.of(
+                                context,
+                              ).colorScheme.onPrimary.withValues(alpha: 0.8),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            );
           },
-          child: Text(widget.friend.displayName),
         ),
       ),
       body: SafeArea(
@@ -81,6 +141,46 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                       .markMessagesAsRead(widget.friend.uid);
 
                   final messages = snapshot.data!;
+                  if (messages.isEmpty) {
+                    return Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          CircleAvatar(
+                            radius: 42,
+                            backgroundColor: Theme.of(
+                              context,
+                            ).colorScheme.primaryContainer,
+                            child: Icon(
+                              Icons.chat_bubble_outline_rounded,
+                              size: 40,
+                              color: Theme.of(context).colorScheme.primary,
+                            ),
+                          ),
+
+                          const SizedBox(height: 20),
+
+                          Text(
+                            "Start chatting with ${widget.friend.displayName}",
+                            style: Theme.of(context).textTheme.titleLarge
+                                ?.copyWith(fontWeight: FontWeight.bold),
+                          ),
+
+                          const SizedBox(height: 8),
+
+                          Text(
+                            "Say hello 👋",
+                            style: Theme.of(context).textTheme.bodyMedium
+                                ?.copyWith(
+                                  color: Theme.of(
+                                    context,
+                                  ).colorScheme.onSurfaceVariant,
+                                ),
+                          ),
+                        ],
+                      ),
+                    );
+                  }
 
                   WidgetsBinding.instance.addPostFrameCallback((_) {
                     if (_scrollController.hasClients) {
@@ -104,13 +204,28 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                             ? Alignment.centerLeft
                             : Alignment.centerRight,
                         child: Container(
-                          margin: const EdgeInsets.symmetric(vertical: 4),
-                          padding: const EdgeInsets.all(12),
+                          margin: const EdgeInsets.symmetric(
+                            vertical: 5,
+                            horizontal: 6,
+                          ),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 12,
+                          ),
                           decoration: BoxDecoration(
                             color: message.senderUid == widget.friend.uid
                                 ? Colors.grey.shade300
                                 : Theme.of(context).colorScheme.primary,
-                            borderRadius: BorderRadius.circular(12),
+                            borderRadius: BorderRadius.only(
+                              topLeft: const Radius.circular(18),
+                              topRight: const Radius.circular(18),
+                              bottomLeft: Radius.circular(
+                                message.senderUid == widget.friend.uid ? 4 : 18,
+                              ),
+                              bottomRight: Radius.circular(
+                                message.senderUid == widget.friend.uid ? 18 : 4,
+                              ),
+                            ),
                           ),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.end,
@@ -119,8 +234,10 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                               Text(
                                 message.text,
                                 style: TextStyle(
+                                  fontSize: 16,
+                                  height: 1.4,
                                   color: message.senderUid == widget.friend.uid
-                                      ? Colors.black
+                                      ? Colors.black87
                                       : Colors.white,
                                 ),
                               ),
@@ -156,17 +273,47 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
             ),
             SafeArea(
               top: false,
-              child: Padding(
-                padding: const EdgeInsets.all(12),
+              child: Container(
+                padding: const EdgeInsets.fromLTRB(12, 8, 12, 12),
+                decoration: BoxDecoration(
+                  color: Theme.of(context).scaffoldBackgroundColor,
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.05),
+                      blurRadius: 10,
+                      offset: const Offset(0, -2),
+                    ),
+                  ],
+                ),
                 child: Row(
                   children: [
                     Expanded(
                       child: TextField(
                         controller: _controller,
-                        decoration: const InputDecoration(hintText: 'Message'),
+                        textCapitalization: TextCapitalization.sentences,
+                        textInputAction: TextInputAction.send,
+                        onSubmitted: (_) => _send(),
+                        decoration: InputDecoration(
+                          hintText: "Type a message...",
+                          prefixIcon: const Icon(
+                            Icons.chat_bubble_outline_rounded,
+                          ),
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 20,
+                            vertical: 14,
+                          ),
+                        ),
                       ),
                     ),
-                    IconButton(onPressed: _send, icon: const Icon(Icons.send)),
+
+                    const SizedBox(width: 10),
+
+                    FloatingActionButton.small(
+                      heroTag: "sendButton",
+                      elevation: 0,
+                      onPressed: _send,
+                      child: const Icon(Icons.send_rounded),
+                    ),
                   ],
                 ),
               ),

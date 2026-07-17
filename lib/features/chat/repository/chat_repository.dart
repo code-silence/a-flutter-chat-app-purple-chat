@@ -154,6 +154,14 @@ class ChatRepository {
     return UserModel.fromMap(Map<String, dynamic>.from(snap.value as Map));
   }
 
+  Stream<UserModel> userStream(String uid) {
+    return _db.child('users/$uid').onValue.map((event) {
+      final data = Map<String, dynamic>.from(event.snapshot.value as Map);
+
+      return UserModel.fromMap(data);
+    });
+  }
+
   Stream<int> unreadCount(String friendUid) {
     final me = _auth.currentUser;
     if (me == null) {

@@ -51,7 +51,8 @@ class _EmailVerificationScreenState
 
               Text(
                 "We've sent a verification link to your email address.\n"
-                "Click the link, then return here and tap the button below.",
+                "Click the link, then return here and tap the button below.\n"
+                "If you haven't received the email, check your spam folder.",
                 textAlign: TextAlign.center,
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                   color: AppColors.textSecondary,

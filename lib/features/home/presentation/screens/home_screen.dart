@@ -65,6 +65,32 @@ class HomeScreen extends ConsumerWidget {
               if (value == "profile") {
                 context.push(RouteNames.profile);
               } else if (value == "logout") {
+                final confirm = await showDialog<bool>(
+                  context: context,
+                  builder: (context) => AlertDialog(
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    title: const Text("Logout"),
+                    content: const Text(
+                      "Are you sure you want to log out of PurpleChat?",
+                    ),
+                    actions: [
+                      TextButton(
+                        onPressed: () => Navigator.pop(context, false),
+                        child: const Text("Cancel"),
+                      ),
+                      FilledButton.icon(
+                        onPressed: () => Navigator.pop(context, true),
+                        icon: const Icon(Icons.logout_rounded),
+                        label: const Text("Logout"),
+                      ),
+                    ],
+                  ),
+                );
+
+                if (confirm != true) return;
+
                 await ref.read(authControllerProvider).logout();
 
                 if (!context.mounted) return;

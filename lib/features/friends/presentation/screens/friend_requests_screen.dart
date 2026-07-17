@@ -13,70 +13,149 @@ class FriendRequestsScreen extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(title: const Text('Friend Requests')),
-      body: StreamBuilder<List<FriendRequest>>(
-        stream: repository.getRequests(),
-        builder: (context, snapshot) {
-          if (!snapshot.hasData) {
-            return const Center(child: CircularProgressIndicator());
-          }
+      body: Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              "Friend Requests",
+              style: Theme.of(
+                context,
+              ).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
+            ),
 
-          final requests = snapshot.data!;
+            const SizedBox(height: 8),
 
-          if (requests.isEmpty) {
-            return const Center(child: Text('No friend requests'));
-          }
+            Text(
+              "Accept or decline people who want to connect with you.",
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+              ),
+            ),
 
-          return ListView.builder(
-            itemCount: requests.length,
-            itemBuilder: (context, index) {
-              final request = requests[index];
+            const SizedBox(height: 20),
 
-              return FutureBuilder(
-                future: repository.getUser(request.uid),
+            Expanded(
+              child: StreamBuilder<List<FriendRequest>>(
+                stream: repository.getRequests(),
                 builder: (context, snapshot) {
                   if (!snapshot.hasData) {
-                    return const ListTile(title: Text('Loading...'));
+                    return const Center(child: CircularProgressIndicator());
                   }
 
-                  final user = snapshot.data!;
+                  final requests = snapshot.data!;
 
-                  return ListTile(
-                    leading: CircleAvatar(
-                      backgroundImage: user.photoUrl.isNotEmpty
-                          ? NetworkImage(user.photoUrl)
-                          : null,
-                      child: user.photoUrl.isEmpty
-                          ? Text(user.displayName[0].toUpperCase())
-                          : null,
-                    ),
+                  if (requests.isEmpty) {
+                    return Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.group_outlined,
+                            size: 80,
+                            color: Theme.of(context).colorScheme.primary,
+                          ),
+                          const SizedBox(height: 16),
+                          const Text(
+                            "No Friend Requests",
+                            style: TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            "When someone sends you a request,\nit will appear here.",
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              color: Theme.of(
+                                context,
+                              ).colorScheme.onSurfaceVariant,
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  }
 
-                    title: Text(user.displayName),
+                  return ListView.builder(
+                    itemCount: requests.length,
+                    itemBuilder: (context, index) {
+                      final request = requests[index];
 
-                    subtitle: Text('@${user.username}'),
+                      return FutureBuilder(
+                        future: repository.getUser(request.uid),
+                        builder: (context, snapshot) {
+                          if (!snapshot.hasData) {
+                            return const ListTile(title: Text('Loading...'));
+                          }
 
-                    trailing: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        IconButton(
-                          icon: const Icon(Icons.close),
-                          onPressed: () {
-                            repository.rejectRequest(request.uid);
-                          },
-                        ),
-                        IconButton(
-                          icon: const Icon(Icons.check),
-                          onPressed: () {
-                            repository.acceptRequest(request.uid);
-                          },
-                        ),
-                      ],
-                    ),
+                          final user = snapshot.data!;
+
+                          return Card(
+                            elevation: 0,
+                            margin: const EdgeInsets.only(bottom: 14),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(18),
+                            ),
+                            child: Padding(
+                              padding: const EdgeInsets.all(12),
+                              child: ListTile(
+                                leading: CircleAvatar(
+                                  radius: 28,
+                                  backgroundColor: Theme.of(
+                                    context,
+                                  ).colorScheme.primary,
+                                  backgroundImage: user.photoUrl.isNotEmpty
+                                      ? NetworkImage(user.photoUrl)
+                                      : null,
+                                  child: user.photoUrl.isEmpty
+                                      ? Text(user.displayName[0].toUpperCase())
+                                      : null,
+                                ),
+
+                                title: Text(user.displayName),
+
+                                subtitle: Text('@${user.username}'),
+
+                                trailing: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    IconButton(
+                                      icon: const Icon(
+                                        Icons.close_rounded,
+                                        color: Colors.red,
+                                      ),
+                                      onPressed: () {
+                                        repository.rejectRequest(request.uid);
+                                      },
+                                    ),
+                                    IconButton(
+                                      icon: Icon(
+                                        Icons.check_circle_rounded,
+                                        color: Theme.of(
+                                          context,
+                                        ).colorScheme.primary,
+                                      ),
+                                      onPressed: () {
+                                        repository.acceptRequest(request.uid);
+                                      },
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          );
+                        },
+                      );
+                    },
                   );
                 },
-              );
-            },
-          );
-        },
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
