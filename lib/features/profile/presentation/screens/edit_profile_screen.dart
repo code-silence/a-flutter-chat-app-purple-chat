@@ -74,74 +74,79 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
             _loaded = true;
           }
 
-          return Padding(
-            padding: const EdgeInsets.all(20),
-            child: Column(
-              children: [
-                Center(
-                  child: Column(
-                    children: [
-                      CircleAvatar(
-                        radius: 50,
-                        backgroundImage: _image != null
-                            ? FileImage(_image!)
-                            : (user.photoUrl.isNotEmpty
-                                      ? NetworkImage(user.photoUrl)
-                                      : null)
-                                  as ImageProvider?,
-                        child: (_image == null && user.photoUrl.isEmpty)
-                            ? const Icon(Icons.person, size: 50)
-                            : null,
-                      ),
+          return SafeArea(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(20),
+              keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+              child: Column(
+                children: [
+                  Center(
+                    child: Column(
+                      children: [
+                        CircleAvatar(
+                          radius: 50,
+                          backgroundImage: _image != null
+                              ? FileImage(_image!)
+                              : (user.photoUrl.isNotEmpty
+                                        ? NetworkImage(user.photoUrl)
+                                        : null)
+                                    as ImageProvider?,
+                          child: (_image == null && user.photoUrl.isEmpty)
+                              ? const Icon(Icons.person, size: 50)
+                              : null,
+                        ),
 
-                      TextButton(
-                        onPressed: _pickImage,
-                        child: const Text('Change Photo'),
-                      ),
-                    ],
+                        TextButton(
+                          onPressed: _pickImage,
+                          child: const Text('Change Photo'),
+                        ),
+                      ],
+                    ),
                   ),
-                ),
 
-                const SizedBox(height: 20),
-                TextField(
-                  controller: _displayNameController,
-                  decoration: const InputDecoration(labelText: 'Display Name'),
-                ),
+                  const SizedBox(height: 20),
+                  TextField(
+                    controller: _displayNameController,
+                    decoration: const InputDecoration(
+                      labelText: 'Display Name',
+                    ),
+                  ),
 
-                const SizedBox(height: 16),
+                  const SizedBox(height: 16),
 
-                TextField(
-                  controller: _bioController,
-                  maxLines: 3,
-                  decoration: const InputDecoration(labelText: 'Bio'),
-                ),
+                  TextField(
+                    controller: _bioController,
+                    maxLines: 3,
+                    decoration: const InputDecoration(labelText: 'Bio'),
+                  ),
 
-                const SizedBox(height: 24),
+                  const SizedBox(height: 24),
 
-                ElevatedButton(
-                  onPressed: () async {
-                    await repository.updateProfile(
-                      displayName: _displayNameController.text,
-                      bio: _bioController.text,
-                    );
-                    if (_image != null) {
-                      final result = await ref
-                          .read(imgbbServiceProvider)
-                          .upload(_image!);
-
-                      await repository.updatePhoto(
-                        photoUrl: result['photoUrl'],
-                        photoDeleteUrl: result['deleteUrl'],
+                  ElevatedButton(
+                    onPressed: () async {
+                      await repository.updateProfile(
+                        displayName: _displayNameController.text,
+                        bio: _bioController.text,
                       );
-                    }
+                      if (_image != null) {
+                        final result = await ref
+                            .read(imgbbServiceProvider)
+                            .upload(_image!);
 
-                    if (!mounted) return;
+                        await repository.updatePhoto(
+                          photoUrl: result['photoUrl'],
+                          photoDeleteUrl: result['deleteUrl'],
+                        );
+                      }
 
-                    Navigator.pop(context);
-                  },
-                  child: const Text('Save'),
-                ),
-              ],
+                      if (!mounted) return;
+
+                      Navigator.pop(context);
+                    },
+                    child: const Text('Save'),
+                  ),
+                ],
+              ),
             ),
           );
         },

@@ -3,12 +3,21 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../models/friend_request.dart';
 import '../../providers/friend_provider.dart';
+import '../../../../core/widgets/app_snackbar.dart';
 
-class FriendRequestsScreen extends ConsumerWidget {
+class FriendRequestsScreen extends ConsumerStatefulWidget {
   const FriendRequestsScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<FriendRequestsScreen> createState() =>
+      _FriendRequestsScreenState();
+}
+
+class _FriendRequestsScreenState extends ConsumerState<FriendRequestsScreen> {
+  final Set<String> _acceptedRequests = {};
+  final Set<String> _rejectedRequests = {};
+  @override
+  Widget build(BuildContext context) {
     final repository = ref.read(friendRepositoryProvider);
 
     return Scaffold(
@@ -119,31 +128,100 @@ class FriendRequestsScreen extends ConsumerWidget {
 
                                 subtitle: Text('@${user.username}'),
 
-                                trailing: Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    IconButton(
-                                      icon: const Icon(
-                                        Icons.close_rounded,
-                                        color: Colors.red,
+                                trailing:
+                                    _acceptedRequests.contains(request.uid)
+                                    ? const Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          Icon(
+                                            Icons.check_circle_rounded,
+                                            color: Colors.green,
+                                            size: 20,
+                                          ),
+                                          SizedBox(width: 6),
+                                          Text(
+                                            "Friends",
+                                            style: TextStyle(
+                                              color: Colors.green,
+                                              fontWeight: FontWeight.w600,
+                                            ),
+                                          ),
+                                        ],
+                                      )
+                                    : _rejectedRequests.contains(request.uid)
+                                    ? const Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          Icon(
+                                            Icons.cancel_rounded,
+                                            color: Colors.red,
+                                            size: 20,
+                                          ),
+                                          SizedBox(width: 6),
+                                          Text(
+                                            "Declined",
+                                            style: TextStyle(
+                                              color: Colors.red,
+                                              fontWeight: FontWeight.w600,
+                                            ),
+                                          ),
+                                        ],
+                                      )
+                                    : Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          IconButton(
+                                            icon: const Icon(
+                                              Icons.close_rounded,
+                                              color: Colors.red,
+                                            ),
+                                            onPressed: () async {
+                                              AppSnackbar.error(
+                                                context,
+                                                "Request Rejected.",
+                                              );
+                                              await repository.rejectRequest(
+                                                request.uid,
+                                              );
+
+                                              if (!mounted) return;
+
+                                              setState(() {
+                                                _rejectedRequests.add(
+                                                  request.uid,
+                                                );
+                                              });
+
+                                              
+                                            },
+                                          ),
+                                          IconButton(
+                                            icon: Icon(
+                                              Icons.check_circle_rounded,
+                                              color: Theme.of(
+                                                context,
+                                              ).colorScheme.primary,
+                                            ),
+                                            onPressed: () async {
+                                              AppSnackbar.success(
+                                                context,
+                                                "You are now friends!",
+                                              );
+                                              await repository.acceptRequest(
+                                                request.uid,
+                                              );
+
+                                              if (!mounted) return;
+
+                                              setState(() {
+                                                _acceptedRequests.add(
+                                                  request.uid,
+                                                );
+                                              });
+                                            },
+                                          ),
+                                        ],
                                       ),
-                                      onPressed: () {
-                                        repository.rejectRequest(request.uid);
-                                      },
-                                    ),
-                                    IconButton(
-                                      icon: Icon(
-                                        Icons.check_circle_rounded,
-                                        color: Theme.of(
-                                          context,
-                                        ).colorScheme.primary,
-                                      ),
-                                      onPressed: () {
-                                        repository.acceptRequest(request.uid);
-                                      },
-                                    ),
-                                  ],
-                                ),
                               ),
                             ),
                           );

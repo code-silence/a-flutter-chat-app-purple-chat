@@ -3,6 +3,7 @@ import '../../../auth/models/user_model.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../providers/friend_provider.dart';
 import '../../../chat/presentation/screens/chat_screen.dart';
+import '../../../../core/widgets/app_snackbar.dart';
 
 class ProfileActionCard extends StatelessWidget {
   final IconData icon;
@@ -261,104 +262,151 @@ class FriendProfileScreen extends ConsumerWidget {
               ),
 
               const SizedBox(height: 24),
-              const SizedBox(height: 20),
 
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 24),
-                child: SizedBox(
-                  width: double.infinity,
-                  child: FilledButton.icon(
-                    icon: const Icon(Icons.chat_bubble_rounded),
-                    label: const Text("Message"),
-                    onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => ChatScreen(friend: friend),
-                        ),
-                      );
-                    },
-                  ),
-                ),
-              ),
+              FutureBuilder<String>(
+                future: ref
+                    .read(friendRepositoryProvider)
+                    .relationshipStatus(friend.uid),
+                builder: (context, snapshot) {
+                  if (!snapshot.hasData) {
+                    return const Center(child: CircularProgressIndicator());
+                  }
 
-              const SizedBox(height: 12),
+                  final status = snapshot.data!;
 
-              ProfileActionCard(
-                icon: Icons.person_remove_rounded,
-                title: "Remove Friend",
-                color: Colors.orange,
-                onTap: () async {
-                  final confirm = await showDialog<bool>(
-                    context: context,
-                    builder: (context) {
-                      return AlertDialog(
-                        title: const Text('Remove Friend'),
-                        content: Text(
-                          'Remove ${friend.displayName} from your friends?',
-                        ),
-                        actions: [
-                          TextButton(
-                            onPressed: () => Navigator.pop(context, false),
-                            child: const Text('Cancel'),
+                  return Column(
+                    children: [
+                      if (status == "friends") ...[
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 24),
+                          child: SizedBox(
+                            width: double.infinity,
+                            child: FilledButton.icon(
+                              icon: const Icon(Icons.chat_bubble_rounded),
+                              label: const Text("Message"),
+                              onPressed: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (_) => ChatScreen(friend: friend),
+                                  ),
+                                );
+                              },
+                            ),
                           ),
-                          FilledButton(
-                            onPressed: () => Navigator.pop(context, true),
-                            child: const Text('Remove'),
-                          ),
-                        ],
-                      );
-                    },
-                  );
-
-                  if (confirm != true) return;
-
-                  await ref
-                      .read(friendRepositoryProvider)
-                      .removeFriend(friend.uid);
-
-                  if (!context.mounted) return;
-
-                  Navigator.pop(context);
-                },
-              ),
-
-              const SizedBox(height: 12),
-
-              ProfileActionCard(
-                icon: Icons.block_rounded,
-                title: "Block User",
-                color: Colors.red,
-                onTap: () async {
-                  final confirm = await showDialog<bool>(
-                    context: context,
-                    builder: (_) => AlertDialog(
-                      title: const Text('Block User'),
-                      content: Text(
-                        'Block ${friend.displayName}? They will no longer be able to message or send friend requests.',
-                      ),
-                      actions: [
-                        TextButton(
-                          onPressed: () => Navigator.pop(context, false),
-                          child: const Text('Cancel'),
                         ),
-                        FilledButton(
-                          onPressed: () => Navigator.pop(context, true),
-                          child: const Text('Block'),
+
+                        const SizedBox(height: 12),
+
+                        ProfileActionCard(
+                          icon: Icons.person_remove_rounded,
+                          title: "Remove Friend",
+                          color: Colors.orange,
+                          onTap: () async {
+                            final confirm = await showDialog<bool>(
+                              context: context,
+                              builder: (context) {
+                                return AlertDialog(
+                                  title: const Text('Remove Friend'),
+                                  content: Text(
+                                    'Remove ${friend.displayName} from your friends?',
+                                  ),
+                                  actions: [
+                                    TextButton(
+                                      onPressed: () =>
+                                          Navigator.pop(context, false),
+                                      child: const Text('Cancel'),
+                                    ),
+                                    FilledButton(
+                                      onPressed: () =>
+                                          Navigator.pop(context, true),
+                                      child: const Text('Remove'),
+                                    ),
+                                  ],
+                                );
+                              },
+                            );
+
+                            if (confirm != true) return;
+
+                            await ref
+                                .read(friendRepositoryProvider)
+                                .removeFriend(friend.uid);
+
+                            if (!context.mounted) return;
+
+                            Navigator.pop(context);
+                          },
                         ),
+
+                        const SizedBox(height: 12),
                       ],
-                    ),
+
+                      if (status == "none")
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 24),
+                          child: SizedBox(
+                            width: double.infinity,
+                            child: FilledButton.icon(
+                              icon: const Icon(Icons.person_add_alt_1_rounded),
+                              label: const Text("Add Friend"),
+                              onPressed: () async {
+                                await ref
+                                    .read(friendRepositoryProvider)
+                                    .sendRequest(friend.uid);
+
+                                if (!context.mounted) return;
+
+                                AppSnackbar.success(
+                                  context,
+                                  "Friend request sent.",
+                                );
+                              },
+                            ),
+                          ),
+                        ),
+
+                      const SizedBox(height: 12),
+
+                      ProfileActionCard(
+                        icon: Icons.block_rounded,
+                        title: "Block User",
+                        color: Colors.red,
+                        onTap: () async {
+                          final confirm = await showDialog<bool>(
+                            context: context,
+                            builder: (_) => AlertDialog(
+                              title: const Text('Block User'),
+                              content: Text(
+                                'Block ${friend.displayName}? They will no longer be able to message or send friend requests.',
+                              ),
+                              actions: [
+                                TextButton(
+                                  onPressed: () =>
+                                      Navigator.pop(context, false),
+                                  child: const Text('Cancel'),
+                                ),
+                                FilledButton(
+                                  onPressed: () => Navigator.pop(context, true),
+                                  child: const Text('Block'),
+                                ),
+                              ],
+                            ),
+                          );
+
+                          if (confirm != true) return;
+
+                          await ref
+                              .read(friendRepositoryProvider)
+                              .blockUser(friend.uid);
+
+                          if (!context.mounted) return;
+
+                          Navigator.pop(context);
+                        },
+                      ),
+                    ],
                   );
-
-                  if (confirm != true) return;
-
-                  await ref
-                      .read(friendRepositoryProvider)
-                      .blockUser(friend.uid);
-
-                  if (!context.mounted) return;
-
-                  Navigator.pop(context);
                 },
               ),
             ],

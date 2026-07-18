@@ -71,7 +71,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
                   Padding(
                     padding: const EdgeInsets.only(left: 6, bottom: 3),
                     child: Text(
-                      "ALPHA",
+                      "BETA",
                       style: TextStyle(
                         color: Colors.white.withValues(alpha: 0.85),
                         fontSize: 10,
