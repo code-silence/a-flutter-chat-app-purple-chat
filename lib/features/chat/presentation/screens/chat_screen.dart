@@ -1,15 +1,21 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_image_compress/flutter_image_compress.dart';
+import 'package:go_router/go_router.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 import '../../../auth/models/user_model.dart';
 import '../../models/message_model.dart';
 import '../../providers/chat_provider.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import '../../../../core/utils/message_status.dart';
 import '../../../../../core/utils/time_utils.dart';
-import 'package:go_router/go_router.dart';
+import '../../../../core/providers/imgbb_provider.dart';
 import '../../../../routes/route_names.dart';
-import '../../../../core/widgets/cached_avatar.dart';
+import 'package:cached_network_image/cached_network_image.dart';
+import '../widgets/image_viewer_screen.dart';
 
 class ChatScreen extends ConsumerStatefulWidget {
   final UserModel friend;
@@ -23,6 +29,8 @@ class ChatScreen extends ConsumerStatefulWidget {
 class _ChatScreenState extends ConsumerState<ChatScreen> {
   final _controller = TextEditingController();
   final _scrollController = ScrollController();
+
+  bool _sendingImage = false;
 
   @override
   void initState() {
@@ -40,6 +48,10 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
     super.dispose();
   }
 
+  // =========================
+  // SEND TEXT
+  // =========================
+
   Future<void> _send() async {
     final text = _controller.text.trim();
 
@@ -50,6 +62,115 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
     await ref
         .read(chatRepositoryProvider)
         .sendMessage(friendUid: widget.friend.uid, text: text);
+  }
+
+  // =========================
+  // SEND IMAGE
+  // =========================
+
+  Future<void> _pickAndSendImage() async {
+    if (_sendingImage) return;
+
+    final picker = ImagePicker();
+
+    final picked = await picker.pickImage(
+      source: ImageSource.gallery,
+      imageQuality: 100,
+    );
+
+    if (picked == null) return;
+
+    final originalFile = File(picked.path);
+
+    // Maximum allowed image size: 25 MB
+    final originalSize = await originalFile.length();
+
+    if (originalSize > 25 * 1024 * 1024) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Image must be smaller than 25 MB.')),
+      );
+
+      return;
+    }
+
+    setState(() {
+      _sendingImage = true;
+    });
+
+    try {
+      final compressedPath = '${originalFile.path}_chat_compressed.jpg';
+
+      final compressed = await FlutterImageCompress.compressAndGetFile(
+        originalFile.path,
+        compressedPath,
+        quality: 80,
+        format: CompressFormat.jpeg,
+      );
+
+      if (compressed == null) {
+        throw Exception('Failed to compress image.');
+      }
+
+      final compressedFile = File(compressed.path);
+
+      final compressedSize = await compressedFile.length();
+
+      if (compressedSize > 25 * 1024 * 1024) {
+        if (!mounted) return;
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Image is still larger than 25 MB.')),
+        );
+
+        return;
+      }
+
+      final result = await ref
+          .read(imgbbServiceProvider)
+          .upload(compressedFile);
+
+      final imageUrl = result['photoUrl'] as String?;
+
+      if (imageUrl == null || imageUrl.isEmpty) {
+        throw Exception('Image upload failed.');
+      }
+
+      await ref
+          .read(chatRepositoryProvider)
+          .sendImageMessage(friendUid: widget.friend.uid, imageUrl: imageUrl);
+    } catch (e) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Failed to send image. Please try again.'),
+        ),
+      );
+    } finally {
+      if (mounted) {
+        setState(() {
+          _sendingImage = false;
+        });
+      }
+    }
+  }
+
+  // =========================
+  // SCROLL
+  // =========================
+
+  void _scrollToBottom() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!_scrollController.hasClients) return;
+
+      _scrollController.animateTo(
+        _scrollController.position.maxScrollExtent,
+        duration: const Duration(milliseconds: 250),
+        curve: Curves.easeOut,
+      );
+    });
   }
 
   @override
@@ -70,12 +191,17 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
               },
               child: Row(
                 children: [
-                  CachedAvatar(
-                    photoUrl: user.photoUrl,
-                    userId: user.uid,
-                    photoUpdatedAt: user.photoUpdatedAt,
+                  CircleAvatar(
                     radius: 22,
-                    fallbackText: user.displayName,
+                    backgroundColor: Theme.of(
+                      context,
+                    ).colorScheme.primaryContainer,
+                    backgroundImage: user.photoUrl.isNotEmpty
+                        ? NetworkImage(user.photoUrl)
+                        : null,
+                    child: user.photoUrl.isEmpty
+                        ? Text(user.displayName[0].toUpperCase())
+                        : null,
                   ),
 
                   const SizedBox(width: 12),
@@ -99,9 +225,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                             size: 9,
                             color: user.isOnline ? Colors.green : Colors.grey,
                           ),
-
                           const SizedBox(width: 5),
-
                           Text(
                             user.isOnline ? "Online" : "Offline",
                             style: TextStyle(
@@ -121,9 +245,13 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
           },
         ),
       ),
+
       body: SafeArea(
         child: Column(
           children: [
+            // =========================
+            // MESSAGES
+            // =========================
             Expanded(
               child: StreamBuilder<List<MessageModel>>(
                 stream: repository.messageStream(widget.friend.uid),
@@ -137,6 +265,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                       .markMessagesAsRead(widget.friend.uid);
 
                   final messages = snapshot.data!;
+
                   if (messages.isEmpty) {
                     return Center(
                       child: Column(
@@ -178,15 +307,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                     );
                   }
 
-                  WidgetsBinding.instance.addPostFrameCallback((_) {
-                    if (_scrollController.hasClients) {
-                      _scrollController.animateTo(
-                        _scrollController.position.maxScrollExtent,
-                        duration: const Duration(milliseconds: 250),
-                        curve: Curves.easeOut,
-                      );
-                    }
-                  });
+                  _scrollToBottom();
 
                   return ListView.builder(
                     controller: _scrollController,
@@ -195,67 +316,121 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                     itemBuilder: (context, index) {
                       final message = messages[index];
 
+                      final isMe =
+                          message.senderUid ==
+                          FirebaseAuth.instance.currentUser?.uid;
+
                       return Align(
-                        alignment: message.senderUid == widget.friend.uid
-                            ? Alignment.centerLeft
-                            : Alignment.centerRight,
+                        alignment: isMe
+                            ? Alignment.centerRight
+                            : Alignment.centerLeft,
                         child: Container(
+                          constraints: BoxConstraints(
+                            maxWidth: MediaQuery.of(context).size.width * 0.75,
+                          ),
                           margin: const EdgeInsets.symmetric(
                             vertical: 5,
                             horizontal: 6,
                           ),
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 16,
-                            vertical: 12,
-                          ),
+                          padding: message.isImage
+                              ? const EdgeInsets.all(5)
+                              : const EdgeInsets.symmetric(
+                                  horizontal: 16,
+                                  vertical: 12,
+                                ),
                           decoration: BoxDecoration(
-                            color: message.senderUid == widget.friend.uid
-                                ? Colors.grey.shade300
-                                : Theme.of(context).colorScheme.primary,
+                            color: isMe
+                                ? Theme.of(context).colorScheme.primary
+                                : Colors.grey.shade300,
                             borderRadius: BorderRadius.only(
                               topLeft: const Radius.circular(18),
                               topRight: const Radius.circular(18),
-                              bottomLeft: Radius.circular(
-                                message.senderUid == widget.friend.uid ? 4 : 18,
-                              ),
-                              bottomRight: Radius.circular(
-                                message.senderUid == widget.friend.uid ? 18 : 4,
-                              ),
+                              bottomLeft: Radius.circular(isMe ? 18 : 4),
+                              bottomRight: Radius.circular(isMe ? 4 : 18),
                             ),
                           ),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.end,
-                            mainAxisSize: MainAxisSize.min,
                             children: [
-                              Text(
-                                message.text,
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  height: 1.4,
-                                  color: message.senderUid == widget.friend.uid
-                                      ? Colors.black87
-                                      : Colors.white,
+                              if (message.isImage)
+                                GestureDetector(
+                                  onTap: () {
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (_) => ImageViewerScreen(
+                                          imageUrl: message.imageUrl,
+                                        ),
+                                      ),
+                                    );
+                                  },
+                                  child: ClipRRect(
+                                    borderRadius: BorderRadius.circular(14),
+                                    child: CachedNetworkImage(
+                                      imageUrl: message.imageUrl,
+                                      width: 240,
+                                      fit: BoxFit.contain,
+                                      placeholder: (context, url) {
+                                        return const SizedBox(
+                                          width: 240,
+                                          height: 180,
+                                          child: Center(
+                                            child: CircularProgressIndicator(),
+                                          ),
+                                        );
+                                      },
+                                      errorWidget: (context, url, error) {
+                                        return const SizedBox(
+                                          width: 240,
+                                          height: 180,
+                                          child: Center(
+                                            child: Icon(
+                                              Icons.broken_image_rounded,
+                                              size: 40,
+                                            ),
+                                          ),
+                                        );
+                                      },
+                                    ),
+                                  ),
                                 ),
-                              ),
 
-                              if (message.senderUid ==
-                                  FirebaseAuth.instance.currentUser?.uid)
-                                Padding(
-                                  padding: const EdgeInsets.only(top: 4),
-                                  child: MessageStatus.icon(message),
+                              if (!message.isImage)
+                                Text(
+                                  message.text,
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    height: 1.4,
+                                    color: isMe ? Colors.white : Colors.black87,
+                                  ),
                                 ),
 
                               Padding(
-                                padding: const EdgeInsets.only(top: 2),
-                                child: Text(
-                                  TimeUtils.formatMessageTime(message.sentAt),
-                                  style: TextStyle(
-                                    fontSize: 10,
-                                    color:
-                                        message.senderUid == widget.friend.uid
-                                        ? Colors.black54
-                                        : Colors.white70,
-                                  ),
+                                padding: EdgeInsets.only(
+                                  top: message.isImage ? 3 : 2,
+                                  right: message.isImage ? 4 : 0,
+                                  left: message.isImage ? 4 : 0,
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Text(
+                                      TimeUtils.formatMessageTime(
+                                        message.sentAt,
+                                      ),
+                                      style: TextStyle(
+                                        fontSize: 10,
+                                        color: isMe
+                                            ? Colors.white70
+                                            : Colors.black54,
+                                      ),
+                                    ),
+
+                                    if (isMe) ...[
+                                      const SizedBox(width: 4),
+                                      MessageStatus.icon(message),
+                                    ],
+                                  ],
                                 ),
                               ),
                             ],
@@ -267,6 +442,10 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                 },
               ),
             ),
+
+            // =========================
+            // INPUT
+            // =========================
             SafeArea(
               top: false,
               child: Container(
@@ -283,18 +462,30 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                 ),
                 child: Row(
                   children: [
+                    IconButton(
+                      tooltip: 'Send image',
+                      onPressed: _sendingImage ? null : _pickAndSendImage,
+                      icon: _sendingImage
+                          ? const SizedBox(
+                              width: 22,
+                              height: 22,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            )
+                          : const Icon(Icons.image_rounded),
+                    ),
+
+                    const SizedBox(width: 4),
+
                     Expanded(
                       child: TextField(
                         controller: _controller,
                         textCapitalization: TextCapitalization.sentences,
                         textInputAction: TextInputAction.send,
                         onSubmitted: (_) => _send(),
-                        decoration: InputDecoration(
+                        decoration: const InputDecoration(
                           hintText: "Type a message...",
-                          prefixIcon: const Icon(
-                            Icons.chat_bubble_outline_rounded,
-                          ),
-                          contentPadding: const EdgeInsets.symmetric(
+                          prefixIcon: Icon(Icons.chat_bubble_outline_rounded),
+                          contentPadding: EdgeInsets.symmetric(
                             horizontal: 20,
                             vertical: 14,
                           ),

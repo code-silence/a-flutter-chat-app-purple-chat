@@ -12,6 +12,7 @@ class ChatRepository {
 
   Stream<List<MessageModel>> messageStream(String friendUid) {
     final me = _auth.currentUser;
+
     if (me == null) {
       return const Stream.empty();
     }
@@ -27,7 +28,7 @@ class ChatRepository {
 
       final messages = data.entries.map((entry) {
         return MessageModel.fromMap(
-          entry.key,
+          entry.key.toString(),
           Map<dynamic, dynamic>.from(entry.value),
         );
       }).toList();
@@ -38,46 +39,141 @@ class ChatRepository {
     });
   }
 
+  // =========================
+  // TEXT MESSAGE
+  // =========================
+
   Future<void> sendMessage({
     required String friendUid,
     required String text,
   }) async {
     final me = _auth.currentUser;
+
     if (me == null) return;
 
     if (await isBlocked(friendUid)) {
       return;
     }
+
+    final cleanText = text.trim();
+
+    if (cleanText.isEmpty) return;
+
     final chatId = ChatUtils.getChatId(me.uid, friendUid);
 
     final messageRef = _db.child('messages/$chatId').push();
 
     await messageRef.set({
       'senderUid': me.uid,
-      'text': text.trim(),
+      'text': cleanText,
+      'type': 'text',
+      'imageUrl': '',
       'sentAt': ServerValue.timestamp,
       'deliveredAt': 0,
       'readAt': 0,
     });
 
-    final unreadRef = _db.child('chat_meta/$friendUid/${me.uid}/unread');
+    await _increaseUnread(friendUid);
+
+    await _updateChatMeta(
+      chatId: chatId,
+      friendUid: friendUid,
+      lastMessage: cleanText,
+    );
+  }
+
+  // =========================
+  // IMAGE MESSAGE
+  // =========================
+
+  Future<void> sendImageMessage({
+    required String friendUid,
+    required String imageUrl,
+  }) async {
+    final me = _auth.currentUser;
+
+    if (me == null) return;
+
+    if (await isBlocked(friendUid)) {
+      return;
+    }
+
+    if (imageUrl.trim().isEmpty) return;
+
+    final chatId = ChatUtils.getChatId(me.uid, friendUid);
+
+    final messageRef = _db.child('messages/$chatId').push();
+
+    await messageRef.set({
+      'senderUid': me.uid,
+      'text': '',
+      'type': 'image',
+      'imageUrl': imageUrl,
+      'sentAt': ServerValue.timestamp,
+      'deliveredAt': 0,
+      'readAt': 0,
+    });
+
+    await _increaseUnread(friendUid);
+
+    await _updateChatMeta(
+      chatId: chatId,
+      friendUid: friendUid,
+      lastMessage: '📷 Image',
+    );
+  }
+
+  // =========================
+  // UNREAD
+  // =========================
+
+  Future<void> _increaseUnread(String friendUid) async {
+    final me = _auth.currentUser;
+
+    if (me == null) return;
+
+    final unreadRef = _db.child(
+      'chat_meta/$friendUid/${me.uid}/unread',
+    );
 
     final snap = await unreadRef.get();
 
-    final current = (snap.value as int?) ?? 0;
+    final current = (snap.value as num?)?.toInt() ?? 0;
 
     await unreadRef.set(current + 1);
+  }
+
+  // =========================
+  // CHAT META
+  // =========================
+
+  Future<void> _updateChatMeta({
+    required String chatId,
+    required String friendUid,
+    required String lastMessage,
+  }) async {
+    final me = _auth.currentUser;
+
+    if (me == null) return;
 
     await _db.child('chats/$chatId').set({
-      'members': {me.uid: true, friendUid: true},
-      'lastMessage': text.trim(),
+      'members': {
+        me.uid: true,
+        friendUid: true,
+      },
+      'lastMessage': lastMessage,
       'lastMessageTime': ServerValue.timestamp,
       'lastSenderUid': me.uid,
     });
   }
 
+  // =========================
+  // READ / DELIVERED
+  // =========================
+
   Future<void> markMessagesAsRead(String friendUid) async {
     final me = _auth.currentUser;
+
     if (me == null) return;
 
     final chatId = ChatUtils.getChatId(me.uid, friendUid);
@@ -90,9 +186,11 @@ class ChatRepository {
 
     for (final entry in data.entries) {
       final messageId = entry.key;
+
       final message = Map<dynamic, dynamic>.from(entry.value);
 
-      if (message['senderUid'] == friendUid && (message['readAt'] ?? 0) == 0) {
+      if (message['senderUid'] == friendUid &&
+          (message['readAt'] ?? 0) == 0) {
         await _db
             .child('messages/$chatId/$messageId/readAt')
             .set(ServerValue.timestamp);
@@ -106,11 +204,18 @@ class ChatRepository {
       }
     }
 
-    await _db.child('chat_meta/${me.uid}/$friendUid/unread').set(0);
+    await _db
+        .child('chat_meta/${me.uid}/$friendUid/unread')
+        .set(0);
   }
+
+  // =========================
+  // CHAT LIST
+  // =========================
 
   Stream<List<ChatModel>> chatStream() {
     final me = _auth.currentUser;
+
     if (me == null) {
       return const Stream.empty();
     }
@@ -135,28 +240,42 @@ class ChatRepository {
         }
       }
 
-      chats.sort((a, b) => b.lastMessageTime.compareTo(a.lastMessageTime));
+      chats.sort(
+        (a, b) =>
+            b.lastMessageTime.compareTo(a.lastMessageTime),
+      );
 
       return chats;
     });
   }
 
+  // =========================
+  // FRIEND
+  // =========================
+
   Future<UserModel?> getFriend(ChatModel chat) async {
     final me = _auth.currentUser;
+
     if (me == null) return null;
 
-    final friendUid = chat.members.keys.firstWhere((uid) => uid != me.uid);
+    final friendUid = chat.members.keys.firstWhere(
+      (uid) => uid != me.uid,
+    );
 
     final snap = await _db.child('users/$friendUid').get();
 
     if (!snap.exists) return null;
 
-    return UserModel.fromMap(Map<String, dynamic>.from(snap.value as Map));
+    return UserModel.fromMap(
+      Map<String, dynamic>.from(snap.value as Map),
+    );
   }
 
   Stream<UserModel> userStream(String uid) {
     return _db.child('users/$uid').onValue.map((event) {
-      final data = Map<String, dynamic>.from(event.snapshot.value as Map);
+      final data = Map<String, dynamic>.from(
+        event.snapshot.value as Map,
+      );
 
       return UserModel.fromMap(data);
     });
@@ -164,24 +283,35 @@ class ChatRepository {
 
   Stream<int> unreadCount(String friendUid) {
     final me = _auth.currentUser;
+
     if (me == null) {
       return const Stream.empty();
     }
 
-    return _db.child('chat_meta/${me.uid}/$friendUid/unread').onValue.map((
-      event,
-    ) {
-      return (event.snapshot.value as int?) ?? 0;
+    return _db
+        .child('chat_meta/${me.uid}/$friendUid/unread')
+        .onValue
+        .map((event) {
+      return (event.snapshot.value as num?)?.toInt() ?? 0;
     });
   }
 
+  // =========================
+  // BLOCK
+  // =========================
+
   Future<bool> isBlocked(String uid) async {
     final me = _auth.currentUser;
+
     if (me == null) return true;
 
-    final iBlocked = await _db.child('blocked_users/${me.uid}/$uid').get();
+    final iBlocked = await _db
+        .child('blocked_users/${me.uid}/$uid')
+        .get();
 
-    final blockedMe = await _db.child('blocked_users/$uid/${me.uid}').get();
+    final blockedMe = await _db
+        .child('blocked_users/$uid/${me.uid}')
+        .get();
 
     return iBlocked.exists || blockedMe.exists;
   }
