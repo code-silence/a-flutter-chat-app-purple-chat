@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../models/friend_request.dart';
 import '../../providers/friend_provider.dart';
 import '../../../../core/widgets/app_snackbar.dart';
+import '../../../../core/widgets/cached_avatar.dart';
 
 class FriendRequestsScreen extends ConsumerStatefulWidget {
   const FriendRequestsScreen({super.key});
@@ -111,17 +112,12 @@ class _FriendRequestsScreenState extends ConsumerState<FriendRequestsScreen> {
                             child: Padding(
                               padding: const EdgeInsets.all(12),
                               child: ListTile(
-                                leading: CircleAvatar(
+                                leading: CachedAvatar(
+                                  photoUrl: user.photoUrl,
+                                  userId: user.uid,
+                                  photoUpdatedAt: user.photoUpdatedAt,
                                   radius: 28,
-                                  backgroundColor: Theme.of(
-                                    context,
-                                  ).colorScheme.primary,
-                                  backgroundImage: user.photoUrl.isNotEmpty
-                                      ? NetworkImage(user.photoUrl)
-                                      : null,
-                                  child: user.photoUrl.isEmpty
-                                      ? Text(user.displayName[0].toUpperCase())
-                                      : null,
+                                  fallbackText: user.displayName,
                                 ),
 
                                 title: Text(user.displayName),
@@ -191,8 +187,6 @@ class _FriendRequestsScreenState extends ConsumerState<FriendRequestsScreen> {
                                                   request.uid,
                                                 );
                                               });
-
-                                              
                                             },
                                           ),
                                           IconButton(

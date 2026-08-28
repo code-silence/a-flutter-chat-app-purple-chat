@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../auth/models/user_model.dart';
 import '../../../chat/presentation/screens/chat_screen.dart';
 import '../../providers/friend_provider.dart';
+import '../../../../core/widgets/cached_avatar.dart';
 
 class FriendsScreen extends ConsumerStatefulWidget {
   const FriendsScreen({super.key});
@@ -103,15 +104,13 @@ class _FriendsScreenState extends ConsumerState<FriendsScreen> {
                               borderRadius: BorderRadius.circular(18),
                             ),
                             child: ListTile(
-                              leading: CircleAvatar(
-                                radius: 26,
-                                backgroundImage: user.photoUrl.isNotEmpty
-                                    ? NetworkImage(user.photoUrl)
-                                    : null,
-                                child: user.photoUrl.isEmpty
-                                    ? Text(user.displayName[0].toUpperCase())
-                                    : null,
-                              ),
+                              leading: CachedAvatar(
+  photoUrl: user.photoUrl,
+  userId: user.uid,
+  photoUpdatedAt: user.photoUpdatedAt,
+  radius: 26,
+  fallbackText: user.displayName,
+),
                               title: Text(
                                 user.displayName,
                                 style: const TextStyle(

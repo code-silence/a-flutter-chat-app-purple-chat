@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../providers/friend_provider.dart';
 import '../../../chat/presentation/screens/chat_screen.dart';
 import '../../../../core/widgets/app_snackbar.dart';
+import '../../../../core/widgets/cached_avatar.dart';
 
 class ProfileActionCard extends StatelessWidget {
   final IconData icon;
@@ -139,14 +140,12 @@ class FriendProfileScreen extends ConsumerWidget {
                   child: CircleAvatar(
                     radius: 58,
                     backgroundColor: Colors.white,
-                    child: CircleAvatar(
+                    child: CachedAvatar(
+                      photoUrl: friend.photoUrl,
+                      userId: friend.uid,
+                      photoUpdatedAt: friend.photoUpdatedAt,
                       radius: 54,
-                      backgroundImage: friend.photoUrl.isNotEmpty
-                          ? NetworkImage(friend.photoUrl)
-                          : null,
-                      child: friend.photoUrl.isEmpty
-                          ? const Icon(Icons.person, size: 55)
-                          : null,
+                      fallbackText: friend.displayName,
                     ),
                   ),
                 ),

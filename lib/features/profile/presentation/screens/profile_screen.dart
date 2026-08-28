@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import '../../../auth/models/user_model.dart';
 import '../../../auth/providers/auth_providers.dart';
 import '../../../../routes/route_names.dart';
+import '../../../../core/widgets/cached_avatar.dart';
 
 class ProfileActionCard extends StatelessWidget {
   final IconData icon;
@@ -151,14 +152,12 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                       child: CircleAvatar(
                         radius: 58,
                         backgroundColor: Colors.white,
-                        child: CircleAvatar(
+                        child: CachedAvatar(
+                          photoUrl: user.photoUrl,
+                          userId: user.uid,
+                          photoUpdatedAt: user.photoUpdatedAt,
                           radius: 54,
-                          backgroundImage: user.photoUrl.isNotEmpty
-                              ? NetworkImage(user.photoUrl)
-                              : null,
-                          child: user.photoUrl.isEmpty
-                              ? const Icon(Icons.person, size: 55)
-                              : null,
+                          fallbackText: user.displayName,
                         ),
                       ),
                     ),

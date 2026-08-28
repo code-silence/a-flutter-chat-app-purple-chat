@@ -9,6 +9,7 @@ import '../../../../core/utils/message_status.dart';
 import '../../../../../core/utils/time_utils.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../routes/route_names.dart';
+import '../../../../core/widgets/cached_avatar.dart';
 
 class ChatScreen extends ConsumerStatefulWidget {
   final UserModel friend;
@@ -69,17 +70,12 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
               },
               child: Row(
                 children: [
-                  CircleAvatar(
+                  CachedAvatar(
+                    photoUrl: user.photoUrl,
+                    userId: user.uid,
+                    photoUpdatedAt: user.photoUpdatedAt,
                     radius: 22,
-                    backgroundColor: Theme.of(
-                      context,
-                    ).colorScheme.primaryContainer,
-                    backgroundImage: user.photoUrl.isNotEmpty
-                        ? NetworkImage(user.photoUrl)
-                        : null,
-                    child: user.photoUrl.isEmpty
-                        ? Text(user.displayName[0].toUpperCase())
-                        : null,
+                    fallbackText: user.displayName,
                   ),
 
                   const SizedBox(width: 12),

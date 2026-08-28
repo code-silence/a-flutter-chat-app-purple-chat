@@ -6,6 +6,7 @@ import '../../../auth/providers/auth_providers.dart';
 import 'dart:io';
 import 'package:image_picker/image_picker.dart';
 import 'package:flutter_image_compress/flutter_image_compress.dart';
+import '../../../../core/widgets/cached_avatar.dart';
 
 import '../../../../core/providers/imgbb_provider.dart';
 
@@ -83,18 +84,18 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                   Center(
                     child: Column(
                       children: [
-                        CircleAvatar(
-                          radius: 50,
-                          backgroundImage: _image != null
-                              ? FileImage(_image!)
-                              : (user.photoUrl.isNotEmpty
-                                        ? NetworkImage(user.photoUrl)
-                                        : null)
-                                    as ImageProvider?,
-                          child: (_image == null && user.photoUrl.isEmpty)
-                              ? const Icon(Icons.person, size: 50)
-                              : null,
-                        ),
+                        _image != null
+    ? CircleAvatar(
+        radius: 50,
+        backgroundImage: FileImage(_image!),
+      )
+    : CachedAvatar(
+        photoUrl: user.photoUrl,
+        userId: user.uid,
+        photoUpdatedAt: user.photoUpdatedAt,
+        radius: 50,
+        fallbackText: user.displayName,
+      ),
 
                         TextButton(
                           onPressed: _pickImage,

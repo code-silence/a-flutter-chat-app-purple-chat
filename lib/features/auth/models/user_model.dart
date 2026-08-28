@@ -5,6 +5,7 @@ class UserModel {
   final String email;
   final String photoUrl;
   final String photoDeleteUrl;
+  final int photoUpdatedAt;
   final String bio;
   final bool isOnline;
   final int lastSeen;
@@ -17,6 +18,7 @@ class UserModel {
     required this.email,
     required this.photoUrl,
     required this.photoDeleteUrl,
+    required this.photoUpdatedAt,
     required this.bio,
     required this.isOnline,
     required this.lastSeen,
@@ -30,6 +32,7 @@ class UserModel {
     String? email,
     String? photoUrl,
     String? photoDeleteUrl,
+    int? photoUpdatedAt,
     String? bio,
     bool? isOnline,
     int? lastSeen,
@@ -42,6 +45,7 @@ class UserModel {
       email: email ?? this.email,
       photoUrl: photoUrl ?? this.photoUrl,
       photoDeleteUrl: photoDeleteUrl ?? this.photoDeleteUrl,
+      photoUpdatedAt: photoUpdatedAt ?? this.photoUpdatedAt,
       bio: bio ?? this.bio,
       isOnline: isOnline ?? this.isOnline,
       lastSeen: lastSeen ?? this.lastSeen,
@@ -57,6 +61,7 @@ class UserModel {
       'email': email,
       'photoUrl': photoUrl,
       'photoDeleteUrl': photoDeleteUrl,
+      'photoUpdatedAt': photoUpdatedAt,
       'bio': bio,
       'isOnline': isOnline,
       'lastSeen': lastSeen,
@@ -72,6 +77,7 @@ class UserModel {
       email: map['email'] ?? '',
       photoUrl: map['photoUrl'] ?? '',
       photoDeleteUrl: map['photoDeleteUrl'] ?? '',
+      photoUpdatedAt: map['photoUpdatedAt'] ?? 0,
       bio: map['bio'] ?? '',
       isOnline: map['isOnline'] ?? false,
       lastSeen: map['lastSeen'] ?? 0,

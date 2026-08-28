@@ -50,6 +50,7 @@ class AuthRepository {
     await usersRef.child(user.uid).update({
       'photoUrl': photoUrl,
       'photoDeleteUrl': photoDeleteUrl,
+      'photoUpdatedAt': ServerValue.timestamp,
     });
   }
 
@@ -164,6 +165,7 @@ class AuthRepository {
         email: email,
         photoUrl: '',
         photoDeleteUrl: '',
+        photoUpdatedAt: 0,
         bio: '',
         isOnline: false,
         lastSeen: now,
